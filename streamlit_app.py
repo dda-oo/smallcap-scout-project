@@ -69,8 +69,6 @@ def fetch_stock_news_marketaux(tickers):
         return []
     
     conn = http.client.HTTPSConnection('api.marketaux.com')
-    
-    # Prepare parameters for the API request
     params = urllib.parse.urlencode({
         'api_token': 'ADMI4P1TMPl0bv5LUblXDRsitsoaRiLIfeFNNrlm',  # Use your actual API token
         'symbols': ','.join(tickers),  # Join tickers
@@ -85,10 +83,10 @@ def fetch_stock_news_marketaux(tickers):
     
     # Parse the JSON data
     news_data = json.loads(data.decode('utf-8'))
-    
+
     # Print the entire news_data for debugging
-    print(news_data)  # Use this to check the structure of the response
-    
+    print("Full API Response:", news_data)  # Print the entire response
+
     return news_data.get('data', [])  # Return the news data or an empty list
 
 # Display news for the selected tickers in the sidebar
