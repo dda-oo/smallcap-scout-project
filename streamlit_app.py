@@ -5,11 +5,15 @@ import matplotlib.pyplot as plt
 import requests
 from yahoo_fin import stock_info as si  # For Yahoo Finance data
 
-# Set the favicon
-st.set_page_config(page_title="Stock Predictor", page_icon="favicon.ico")
+# Set the favicon and page title
+st.set_page_config(
+    page_title="Stock Predictor", 
+    page_icon="images/favicon.ico",  # Ensure favicon is in the "images" folder
+    layout="wide"  # Optional: Makes the layout wider for better visibility
+)
 
 # Add the logo to the sidebar, resized and smaller
-st.sidebar.image("logo.png", width=120)
+st.sidebar.image("images/logo.png", width=120)  # Ensure logo is in the "images" folder
 
 # Title and description (centered on the main page)
 st.title("Stock Performance and Prediction Dashboard")
