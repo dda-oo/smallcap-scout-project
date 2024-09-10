@@ -4,6 +4,9 @@ import numpy as np
 import matplotlib.pyplot as plt
 import requests
 from yahoo_fin import stock_info as si  # For Yahoo Finance data
+import http.client
+import urllib
+import json
 
 # Set the favicon and page title
 st.set_page_config(
@@ -26,7 +29,7 @@ st.write("""
 @st.cache
 def load_tickers():
     # Assuming the CSV file has a column called 'Ticker'
-    tickers_df = pd.read_csv('data/abbot_sample.csv')  # Replace with the actual file path
+    tickers_df = pd.read_csv('data/sample.csv')  # Replace with the actual file path
     return tickers_df['Ticker'].tolist()
 
 available_tickers = load_tickers()
@@ -112,27 +115,44 @@ if tickers:
     else:
         st.error("Failed to fetch data from external service.")
 
-# Fetch latest news for the selected tickers from Yahoo Finance
+# Option 1: Yahoo Finance News Fetching
+def fetch_news_yahoo_finance(ticker):
+    try:
+        news = si.get_news(ticker)
+        if news:
+            for item in news[:5]:  # Display only the top 5 news items
+                st.write(f"- [{item['title']}]({item['link']})")
+        else:
+            st.write(f"No news available for {ticker}.")
+    except Exception as e:
+        st.error(f"Could not fetch news for {ticker}. Error: {e}")
+
+
+# Option 2: Marketaux API News Fetching
 def fetch_stock_news_marketaux(tickers):
     conn = http.client.HTTPSConnection('api.marketaux.com')
     
     params = urllib.parse.urlencode({
-        'api_token': 'ADMI4P1TMPl0bv5LUblXDRsitsoaRiLIfeFNNrlm',
+        'api_token': 'ADMI4P1TMPl0bv5LUblXDRsitsoaRiLIfeFNNrlm',  # Replace with your API key
         'symbols': ','.join(tickers),
-        'limit': 5  # You can adjust this limit as needed
+        'limit': 5  # Limit the number of news articles
     })
     
     conn.request('GET', '/v1/news/all?{}'.format(params))
     res = conn.getresponse()
-    data = res.read()
     
-    news_data = json.loads(data.decode('utf-8'))
-    return news_data
+    if res.status == 200:
+        data = res.read()
+        news_data = json.loads(data.decode('utf-8'))
+        return news_data.get('data', [])
+    else:
+        return []
 
-# Display news for each ticker
-for ticker in tickers:
-    st.write(f"#### News for {ticker}")
-    fetch_news_yahoo_finance(ticker)  # You can switch to `fetch_stock_news_marketaux(tickers)` if needed
-
-GET https://api.marketaux.com/v1/news/all?symbols=AAPL,TSLA&filter_entities=true&api_token=ADMI4P1TMPl0bv5LUblXDRsitsoaRiLIfeFNNrlm
+# Displaying Marketaux News
+def display_marketaux_news(news_items):
+    if news_items:
+        for item in news_items:
+            st.write(f"- [{item['title']}]({item['url']})")
+    else:
+        st.write("No news available.")
 
