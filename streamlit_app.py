@@ -12,7 +12,7 @@ import json
 st.set_page_config(page_title="Stock Predictor", page_icon="favicon.ico")
 
 # Add logo
-st.image("logo.png", use_column_width=True)
+st.image("images/logo.png", use_column_width=True)
 
 # Title and description
 st.title("Stock Performance and Prediction Dashboard")
