@@ -85,7 +85,11 @@ def fetch_stock_news_marketaux(tickers):
 # Display news for the selected tickers in the sidebar
 if tickers:
     st.sidebar.header("Latest News")
-    news_data = fetch_stock_news_marketaux(tickers)  # Fetch news for selected tickers
+    
+    # Convert tickers to uppercase before sending to the API
+    uppercase_tickers = [ticker.upper() for ticker in tickers]
+    
+    news_data = fetch_stock_news_marketaux(uppercase_tickers)  # Fetch news for selected tickers
 
     # Display news items in the sidebar
     for item in news_data:
