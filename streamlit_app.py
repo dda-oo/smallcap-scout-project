@@ -26,7 +26,7 @@ st.write("""
 @st.cache
 def load_tickers():
     # Assuming the CSV file has a column called 'Ticker'
-    tickers_df = pd.read_csv('path_to_your_ticker_file.csv')  # Replace with the actual file path
+    tickers_df = pd.read_csv('data/abbot_sample.csv')  # Replace with the actual file path
     return tickers_df['Ticker'].tolist()
 
 available_tickers = load_tickers()
