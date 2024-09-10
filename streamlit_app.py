@@ -113,12 +113,23 @@ if tickers:
         st.error("Failed to fetch data from external service.")
 
 # Fetch latest news for the selected tickers from Yahoo Finance
-st.write("### Latest News on Selected Tickers")
+def fetch_stock_news_marketaux(tickers):
+    conn = http.client.HTTPSConnection('api.marketaux.com')
+    
+    params = urllib.parse.urlencode({
+        'api_token': 'ADMI4P1TMPl0bv5LUblXDRsitsoaRiLIfeFNNrlm',
+        'symbols': ','.join(tickers),
+        'limit': 5  # You can adjust this limit as needed
+    })
+    
+    conn.request('GET', '/v1/news/all?{}'.format(params))
+    res = conn.getresponse()
+    data = res.read()
+    
+    news_data = json.loads(data.decode('utf-8'))
+    return news_data
+
+# Display news for each ticker
 for ticker in tickers:
     st.write(f"#### News for {ticker}")
-    try:
-        news = si.get_news(ticker)
-        for item in news[:5]:  # Display top 5 news items
-            st.write(f"- {item['title']}: {item['link']}")
-    except Exception as e:
-        st.error(f"Could not fetch news for {ticker}")
+    fetch_news_yahoo_finance(ticker)  # You can switch to `fetch_stock_news_marketaux(tickers)` if needed
