@@ -133,15 +133,14 @@ if tickers:
     else:
         st.error("Failed to fetch data from external service.")
 
-def show_disclaimer_sidebar():
-    st.sidebar.markdown(
-        """
-        **Disclaimer:**  
-        This application is for informational purposes only and does not constitute financial advice.  
-        Please consult a professional before making investment decisions.
-        """, 
-        unsafe_allow_html=True
-    )
-
-# Show disclaimer in the sidebar
-show_disclaimer_sidebar()
+# Display disclaimer at the bottom of the sidebar or main page
+st.sidebar.markdown("<br><br><hr>", unsafe_allow_html=True)  # Adds a separator line
+st.sidebar.markdown(
+    """
+    <div style='font-size: 0.9em; font-style: italic; color: #666;'>
+    This project is for educational purposes only. The predictions and information provided here are not financial advice. 
+    Please consult a professional financial advisor for investment decisions.
+    </div>
+    """, 
+    unsafe_allow_html=True
+)
