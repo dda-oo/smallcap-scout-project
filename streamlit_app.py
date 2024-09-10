@@ -82,6 +82,29 @@ def fetch_stock_news_marketaux(tickers):
         st.error("Failed to fetch news.")
         return []
 
+# Fetch news for the selected tickers from the Marketaux API
+def fetch_stock_news_marketaux(tickers):
+    if not tickers:  # Check if there are selected tickers
+        return []
+    
+    conn = http.client.HTTPSConnection('api.marketaux.com')
+    params = urllib.parse.urlencode({
+        'api_token': 'ADMI4P1TMPl0bv5LUblXDRsitsoaRiLIfeFNNrlm',  # Use your actual API token
+        'symbols': ','.join(tickers),
+        'limit': 5  # You can adjust this limit as needed
+    })
+    
+    conn.request('GET', '/v1/news/all?{}'.format(params))
+    res = conn.getresponse()
+    
+    if res.status == 200:
+        data = res.read()
+        news_data = json.loads(data.decode('utf-8'))
+        return news_data.get('data', [])
+    else:
+        st.error("Failed to fetch news.")
+        return []
+
 # Display news for the selected tickers in the sidebar
 if tickers:
     st.sidebar.header("Latest News")
@@ -89,21 +112,9 @@ if tickers:
 
     # Display news items in the sidebar
     for item in news_data:
-        st.sidebar.write(f"- **{item['title']}**: [Read more]({item['link']})")
-
-# Fetch company summaries for each selected ticker
-def fetch_company_summary(ticker):
-    try:
-        summary = si.get_quote_table(ticker)
-        st.write(f"### {ticker} Summary")
-        st.json(summary)
-    except Exception as e:
-        st.error(f"Could not fetch summary for {ticker}")
-
-# Display company summaries for selected tickers
-if tickers:
-    for ticker in tickers:
-        fetch_company_summary(ticker)
+        title = item.get('title', 'No Title Available')  # Fallback if title is not found
+        link = item.get('url', '#')  # Use 'url' or a fallback if the key is not found
+        st.sidebar.write(f"- **{title}**: [Read more]({link})")
 
 # Fetch performance and predictions from the external service
 if tickers:
