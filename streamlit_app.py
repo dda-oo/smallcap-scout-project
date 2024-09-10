@@ -65,9 +65,9 @@ def fetch_stock_news_marketaux(tickers):
     
     conn = http.client.HTTPSConnection('api.marketaux.com')
     params = urllib.parse.urlencode({
-        'api_token': 'ADMI4P1TMPl0bv5LUblXDRsitsoaRiLIfeFNNrlm',  # Use your actual API token
+        'api_token': 'ADMI4P1TMPl0bv5LUblXDRsitsoaRiLIfeFNNrlm',  # The actual API token
         'symbols': ','.join(tickers),
-        'limit': 5  # You can adjust this limit as needed
+        'limit': 5  # Could be adjusted this limit as needed
     })
     
     conn.request('GET', '/v1/news/all?{}'.format(params))
@@ -132,3 +132,16 @@ if tickers:
             st.write(f"**{ticker}:** {advice}")
     else:
         st.error("Failed to fetch data from external service.")
+
+def show_disclaimer_sidebar():
+    st.sidebar.markdown(
+        """
+        **Disclaimer:**  
+        This application is for informational purposes only and does not constitute financial advice.  
+        Please consult a professional before making investment decisions.
+        """, 
+        unsafe_allow_html=True
+    )
+
+# Show disclaimer in the sidebar
+show_disclaimer_sidebar()
