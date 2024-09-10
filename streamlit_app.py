@@ -67,30 +67,7 @@ def fetch_stock_news_marketaux(tickers):
     conn = http.client.HTTPSConnection('api.marketaux.com')
     params = urllib.parse.urlencode({
         'api_token': 'ADMI4P1TMPl0bv5LUblXDRsitsoaRiLIfeFNNrlm',  # Use your actual API token
-        'symbols': ','.join(tickers),
-        'limit': 5  # You can adjust this limit as needed
-    })
-    
-    conn.request('GET', '/v1/news/all?{}'.format(params))
-    res = conn.getresponse()
-    
-    if res.status == 200:
-        data = res.read()
-        news_data = json.loads(data.decode('utf-8'))
-        return news_data.get('data', [])
-    else:
-        st.error("Failed to fetch news.")
-        return []
-
-# Fetch news for the selected tickers from the Marketaux API
-def fetch_stock_news_marketaux(tickers):
-    if not tickers:  # Check if there are selected tickers
-        return []
-    
-    conn = http.client.HTTPSConnection('api.marketaux.com')
-    params = urllib.parse.urlencode({
-        'api_token': 'ADMI4P1TMPl0bv5LUblXDRsitsoaRiLIfeFNNrlm',  # Use your actual API token
-        'symbols': ','.join(tickers),
+        'symbols': ','.join(tickers),  # Ensure selected tickers are passed here
         'limit': 5  # You can adjust this limit as needed
     })
     
