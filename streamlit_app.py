@@ -3,17 +3,125 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import requests
-import json
+from datetime import datetime
+from yahoo_fin import stock_info as si  # For Yahoo Finance data
 import http.client, urllib.parse
+import json
 
-# Function to fetch stock news from Marketaux API
-def fetch_stock_news(tickers):
+# Custom logo and favicon
+st.set_page_config(page_title="Stock Predictor", page_icon="favicon.ico")
+
+# Add logo
+st.image("logo.png", use_column_width=True)
+
+# Title and description
+st.title("Stock Performance and Prediction Dashboard")
+st.write("""
+    Analyze stock performance, compare multiple tickers, predict future growth, and get investment recommendations. 
+    Choose a model to analyze predictions using various techniques.
+""")
+
+# Step 1: Select a Model from the Dropdown
+model_choice = st.selectbox(
+    'Choose a model for prediction:',
+    ['RNN', 'KNN', 'Logistic Regression']
+)
+
+# Step 2: Select the range of quarters (Using a quarter slider)
+def quarter_range_slider():
+    quarters = [(y, q) for y in range(2010, 2025) for q in ['Q1', 'Q2', 'Q3', 'Q4']]
+    quarter_labels = [f"{year}-{quarter}" for year, quarter in quarters]
+    
+    return st.select_slider('Select a quarter range:', options=quarter_labels, value=('2010-Q1', '2024-Q4'))
+
+from_quarter, to_quarter = quarter_range_slider()
+
+# Step 3: Allow users to select multiple tickers using a multiselect box
+tickers = st.multiselect('Select up to 5 tickers:', ['AAPL', 'TSLA', 'AMZN', 'GOOGL', 'MSFT'], default=['AAPL'])
+
+if len(tickers) > 5:
+    st.error("You can select a maximum of 5 tickers.")
+else:
+    st.write(f"Selected tickers: {', '.join(tickers)}")
+
+# Step 4: Fetch company summaries (e.g., market cap, sector, etc.)
+def fetch_company_summary(ticker):
+    try:
+        summary = si.get_quote_table(ticker)
+        st.write(f"### {ticker} Summary")
+        st.json(summary)
+    except Exception as e:
+        st.error(f"Could not fetch summary for {ticker}")
+
+if tickers:
+    for ticker in tickers:
+        fetch_company_summary(ticker)
+
+# Step 5: Fetch performance and predictions from external service
+if tickers:
+    st.write(f"Displaying performance from {from_quarter} to {to_quarter} for tickers: {', '.join(tickers)}")
+
+    api_url = 'https://smallcapscout-196636255726.europe-west1.run.app/predict'
+    params = {
+        'tickers': ','.join(tickers),
+        'from_quarter': from_quarter,
+        'to_quarter': to_quarter,
+        'model': model_choice
+    }
+
+    response = requests.get(api_url, params=params)
+
+    if response.status_code == 200:
+        data = response.json()
+
+        # Extract predictions and recommendations from the JSON response
+        predictions = data.get('predictions', [])
+        recommendations = data.get('recommendations', [])
+
+        # Step 6: Display historical performance
+        for ticker_data in predictions:
+            ticker = ticker_data['ticker']
+            ticker_performance = pd.DataFrame(ticker_data['data'])
+
+            st.write(f"Performance for {ticker}:")
+            st.line_chart(ticker_performance)
+
+        # Step 7: Display predictions for quarter ahead, year ahead, 2 years ahead
+        st.write("### Predictions")
+        for ticker_data in predictions:
+            ticker = ticker_data['ticker']
+            st.write(f"Predictions for {ticker}:")
+            for year in ['quarter_ahead', 'year_ahead', '2_year_ahead']:
+                st.write(f"{year}: {ticker_data['data'].get(year)}")
+
+        # Step 8: Display investment recommendations
+        st.write("### Investment Recommendations")
+        for recommendation in recommendations:
+            ticker = recommendation['ticker']
+            advice = recommendation['advice']
+            st.write(f"**{ticker}:** {advice}")
+    else:
+        st.error("Failed to fetch data from external service.")
+
+# Step 9: Fetch stock news using Yahoo Finance or Marketaux API
+st.write("### Latest News on Selected Tickers")
+
+# Option 1: Yahoo Finance News Fetching
+def fetch_news_yahoo_finance(ticker):
+    try:
+        news = si.get_news(ticker)
+        for item in news[:5]:  # Display only top 5 news items
+            st.write(f"- {item['title']}: {item['link']}")
+    except Exception as e:
+        st.error(f"Could not fetch news for {ticker}")
+
+# Option 2: Marketaux API News Fetching
+def fetch_stock_news_marketaux(tickers):
     conn = http.client.HTTPSConnection('api.marketaux.com')
     
-    # Dynamically setting tickers selected by the user
     params = urllib.parse.urlencode({
         'api_token': 'ADMI4P1TMPl0bv5LUblXDRsitsoaRiLIfeFNNrlm',
-        'symbols': ','.join(tickers),  # Join selected tickers with commas
+        'symbols': ','.join(tickers),
         'limit': 5  # You can adjust this limit as needed
     })
     
@@ -21,92 +129,10 @@ def fetch_stock_news(tickers):
     res = conn.getresponse()
     data = res.read()
     
-    # Parse JSON response
     news_data = json.loads(data.decode('utf-8'))
     return news_data
 
-# Function to load historical stock data (dummy data for now)
-@st.cache
-def load_data(tickers):
-    dates = pd.date_range(start="2010-01-01", end="2024-01-01", freq="Q")
-    data = {ticker: np.random.normal(loc=100, scale=20, size=len(dates)) for ticker in tickers}
-    return pd.DataFrame(data, index=dates)
-
-# Function to predict future performance (dummy logic)
-def predict_future(data, quarters_ahead):
-    future_data = data.iloc[-1] * (1 + np.random.normal(loc=0.05, scale=0.10, size=(quarters_ahead, len(data.columns))))
-    future_dates = pd.date_range(start=data.index[-1], periods=quarters_ahead+1, freq='Q')[1:]
-    return pd.DataFrame(future_data, index=future_dates, columns=data.columns)
-
-# Function to recommend investment (dummy logic)
-def recommend_investment(ticker_data):
-    recommendation = "Good Investment" if ticker_data.iloc[-1] > ticker_data.mean() else "Risky Investment"
-    return recommendation
-
-# Main Streamlit app code
-st.title("Stock Performance and News Dashboard")
-
-# Step 1: Select tickers with a multiselect box
-tickers = st.multiselect('Select up to 5 tickers:', ['AAPL', 'TSLA', 'AMZN', 'GOOGL', 'MSFT'], default=['AAPL'])
-
-# Limit to 5 tickers
-if len(tickers) > 5:
-    st.error("You can select a maximum of 5 tickers.")
-else:
-    st.write(f"Selected tickers: {', '.join(tickers)}")
-
-    # Step 2: Select quarters (2010-2024)
-    quarter_range = st.slider('Select the range of quarters:', 2010.0, 2024.0, (2010.0, 2024.0), step=0.25)
-    from_year = int(quarter_range[0])
-    to_year = int(quarter_range[1])
-
-    # Step 3: Choose a prediction model
-    model_choice = st.selectbox('Choose a prediction model:', ['RNN', 'KNN', 'Logistic Regression'])
-    st.write(f"Selected model: {model_choice}")
-
-    # Load historical performance data (dummy)
-    data = load_data(tickers)
-    filtered_data = data[(data.index.year >= from_year) & (data.index.year <= to_year)]
-
-    # Step 4: Display historical performance
-    if tickers:
-        st.write(f"Displaying performance from {from_year} to {to_year} for tickers: {', '.join(tickers)}")
-        st.line_chart(filtered_data)
-
-        # Step 5: Predict future performance for quarter ahead, year ahead, and 2 years ahead
-        st.write("### Predictions for Quarter Ahead, Year Ahead, and 2 Years Ahead")
-        
-        predictions_1quarter = predict_future(filtered_data, 1)
-        predictions_1year = predict_future(filtered_data, 4)
-        predictions_2years = predict_future(filtered_data, 8)
-        
-        st.write("#### Quarter Ahead Prediction")
-        st.line_chart(predictions_1quarter)
-        
-        st.write("#### Year Ahead Prediction")
-        st.line_chart(predictions_1year)
-        
-        st.write("#### 2 Years Ahead Prediction")
-        st.line_chart(predictions_2years)
-
-        # Step 6: Investment Recommendations
-        st.write("### Investment Recommendations")
-        for ticker in tickers:
-            recommendation = recommend_investment(filtered_data[ticker])
-            st.write(f"**{ticker}:** {recommendation}")
-
-        # Step 7: Fetch and display stock news
-        st.write("### Latest News on Selected Tickers")
-        try:
-            news_data = fetch_stock_news(tickers)
-            for article in news_data.get('data', []):
-                st.write(f"**{article['title']}**")
-                st.write(f"{article['description']}")
-                st.write(f"[Read more]({article['url']})")
-                st.write("---")
-        except Exception as e:
-            st.error(f"Failed to fetch news: {e}")
-
-# Add logo and favicon
-st.sidebar.image("path_to_your_logo.png", use_column_width=True)  # Replace with actual logo path
-st.set_page_config(page_title="Stock Performance Dashboard", page_icon="path_to_your_favicon.ico")  # Replace with actual favicon path
+# Display news for each ticker
+for ticker in tickers:
+    st.write(f"#### News for {ticker}")
+    fetch_news_yahoo_finance(ticker)  # You can switch to `fetch_stock_news_marketaux(tickers)` if needed
