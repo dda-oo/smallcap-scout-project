@@ -3,10 +3,10 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import requests
-from yahoo_fin import stock_info as si  # For Yahoo Finance data
-import http.client
-import urllib
 import json
+import http.client
+import urllib.parse
+from yahoo_fin import stock_info as si  # For Yahoo Finance data
 
 # Set the favicon and page title
 st.set_page_config(
@@ -28,8 +28,7 @@ st.write("""
 # Load the available tickers dynamically from a CSV file
 @st.cache
 def load_tickers():
-    # Assuming the CSV file has a column called 'Ticker'
-    tickers_df = pd.read_csv('data/sample.csv')  # Replace with the actual file path
+    tickers_df = pd.read_csv('data/abbot_sample.csv')  # Ensure this path is correct
     return tickers_df['Ticker'].tolist()
 
 available_tickers = load_tickers()
@@ -59,6 +58,38 @@ if len(tickers) > 5:
     st.sidebar.error("You can select a maximum of 5 tickers.")
 else:
     st.sidebar.write(f"Selected tickers: {', '.join(tickers)}")
+
+# Fetch news for the selected tickers from the Marketaux API
+def fetch_stock_news_marketaux(tickers):
+    if not tickers:  # Check if there are selected tickers
+        return []
+    
+    conn = http.client.HTTPSConnection('api.marketaux.com')
+    params = urllib.parse.urlencode({
+        'api_token': 'ADMI4P1TMPl0bv5LUblXDRsitsoaRiLIfeFNNrlm',  # Use your actual API token
+        'symbols': ','.join(tickers),
+        'limit': 5  # You can adjust this limit as needed
+    })
+    
+    conn.request('GET', '/v1/news/all?{}'.format(params))
+    res = conn.getresponse()
+    
+    if res.status == 200:
+        data = res.read()
+        news_data = json.loads(data.decode('utf-8'))
+        return news_data.get('data', [])
+    else:
+        st.error("Failed to fetch news.")
+        return []
+
+# Display news for the selected tickers in the sidebar
+if tickers:
+    st.sidebar.header("Latest News")
+    news_data = fetch_stock_news_marketaux(tickers)  # Fetch news for selected tickers
+
+    # Display news items in the sidebar
+    for item in news_data:
+        st.sidebar.write(f"- **{item['title']}**: [Read more]({item['link']})")
 
 # Fetch company summaries for each selected ticker
 def fetch_company_summary(ticker):
@@ -114,59 +145,3 @@ if tickers:
             st.write(f"**{ticker}:** {advice}")
     else:
         st.error("Failed to fetch data from external service.")
-
-# Option 1: Yahoo Finance News Fetching
-def fetch_news_yahoo_finance(ticker):
-    try:
-        news = si.get_news(ticker)
-        if news:
-            for item in news[:5]:  # Display only the top 5 news items
-                st.write(f"- [{item['title']}]({item['link']})")
-        else:
-            st.write(f"No news available for {ticker}.")
-    except Exception as e:
-        st.error(f"Could not fetch news for {ticker}. Error: {e}")
-
-
-# Option 2: Marketaux API News Fetching
-def fetch_stock_news_marketaux(tickers):
-    conn = http.client.HTTPSConnection('api.marketaux.com')
-    
-    params = urllib.parse.urlencode({
-        'api_token': 'ADMI4P1TMPl0bv5LUblXDRsitsoaRiLIfeFNNrlm',  # Replace with your API key
-        'symbols': ','.join(tickers),
-        'limit': 5  # Limit the number of news articles
-    })
-    
-    conn.request('GET', '/v1/news/all?{}'.format(params))
-    res = conn.getresponse()
-    
-    if res.status == 200:
-        data = res.read()
-        news_data = json.loads(data.decode('utf-8'))
-        return news_data.get('data', [])
-    else:
-        return []
-
-# Displaying Marketaux News
-def display_marketaux_news(news_items):
-    if news_items:
-        for item in news_items:
-            st.write(f"- [{item['title']}]({item['url']})")
-    else:
-        st.write("No news available.")
-
-# Loop over selected tickers to fetch and display news
-for ticker in tickers:
-    st.write(f"#### News for {ticker}")
-
-    # Uncomment one of the following depending on which service you want to use:
-    
-    # Option 1: Fetch and display Yahoo Finance news
-    fetch_news_yahoo_finance(ticker)
-
-    # Option 2: Fetch and display Marketaux news
-    # news_items = fetch_stock_news_marketaux([ticker])
-    # display_marketaux_news(news_items)
-
-
