@@ -1,7 +1,6 @@
 import streamlit as st
 import pandas as pd
 import numpy as np
-import matplotlib.pyplot as plt
 import requests
 import json
 import http.client
@@ -18,18 +17,8 @@ st.set_page_config(
 # Sidebar layout for form inputs
 st.sidebar.header("Configure your analysis")
 
-# Sidebar layout for form inputs
-st.sidebar.header("Configure your analysis")
-
 # Add the logo to the sidebar, resized and smaller
 st.sidebar.image("images/logo1.png", width=120)  # Ensure logo is in the "images" folder
-
-# Title and description (centered on the main page)
-st.title("Stock Performance and Prediction Dashboard")
-st.write("""
-    Analyze stock performance, compare multiple tickers, predict future growth, and get investment recommendations. 
-    Choose a model to analyze predictions using various techniques.
-""")
 
 # Title and description (centered on the main page)
 st.title("Stock Performance and Prediction Dashboard")
@@ -101,10 +90,7 @@ if tickers:
     for item in news_data:
         title = item.get('title', 'No Title Available')  # Fallback if title is not found
         link = item.get('url', '#')  # Use 'url' or a fallback if the key is not found
-        if title and link:  # Check if both title and link are available
-            st.sidebar.write(f"- **{title}**: [Read more]({link})")
-        else:
-            st.sidebar.write("News item is missing title or link.")
+        st.sidebar.write(f"- **{title}**: [Read more]({link})")
 
 # Fetch performance and predictions from the external service
 if tickers:
