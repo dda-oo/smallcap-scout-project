@@ -71,42 +71,31 @@ def fetch_stock_news_marketaux(tickers):
     conn = http.client.HTTPSConnection('api.marketaux.com')
     params = urllib.parse.urlencode({
         'api_token': 'ADMI4P1TMPl0bv5LUblXDRsitsoaRiLIfeFNNrlm',  # Use your actual API token
-        'symbols': ','.join(tickers),  # Join tickers
-        'filter_entities': 'true',  
+        'symbols': ','.join(tickers),
         'limit': 5  # You can adjust this limit as needed
     })
     
-    # Make the request
-    conn.request('GET', f'/v1/news/all?{params}')
+    conn.request('GET', '/v1/news/all?{}'.format(params))
     res = conn.getresponse()
-    data = res.read()
     
-    # Parse the JSON data
-    news_data = json.loads(data.decode('utf-8'))
-
-    # Print the entire news_data for debugging
-    print("Full API Response:", news_data)  # Print the entire response
-
-    return news_data.get('data', [])  # Return the news data or an empty list
+    if res.status == 200:
+        data = res.read()
+        news_data = json.loads(data.decode('utf-8'))
+        return news_data.get('data', [])
+    else:
+        st.error("Failed to fetch news.")
+        return []
 
 # Display news for the selected tickers in the sidebar
 if tickers:
     st.sidebar.header("Latest News")
-    
-    # Convert tickers to uppercase before sending to the API
-    uppercase_tickers = [ticker.upper() for ticker in tickers]
-    
-    news_items = fetch_stock_news_marketaux(uppercase_tickers)  # Fetch news for selected tickers
-    
-    for item in news_items:
-        # Check the keys in item to see how to access title and link
-        title = item.get('title')  # Adjust based on actual key name
-        link = item.get('link')  # Adjust based on actual key name
-        
-        if title and link:  # Ensure both title and link are available
-            st.sidebar.write(f"- **{title}**: [Read more]({link})")
-        else:
-            st.sidebar.write("News item is missing title or link.")
+    news_data = fetch_stock_news_marketaux(tickers)  # Fetch news for selected tickers
+
+    # Display news items in the sidebar
+    for item in news_data:
+        title = item.get('title', 'No Title Available')  # Fallback if title is not found
+        link = item.get('url', '#')  # Use 'url' or a fallback if the key is not found
+        st.sidebar.write(f"- **{title}**: [Read more]({link})")
 
 # Fetch performance and predictions from the external service
 if tickers:
