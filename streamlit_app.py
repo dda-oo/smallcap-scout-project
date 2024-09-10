@@ -133,3 +133,6 @@ def fetch_stock_news_marketaux(tickers):
 for ticker in tickers:
     st.write(f"#### News for {ticker}")
     fetch_news_yahoo_finance(ticker)  # You can switch to `fetch_stock_news_marketaux(tickers)` if needed
+
+GET https://api.marketaux.com/v1/news/all?symbols=AAPL,TSLA&filter_entities=true&api_token=ADMI4P1TMPl0bv5LUblXDRsitsoaRiLIfeFNNrlm
+
