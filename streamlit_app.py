@@ -86,6 +86,9 @@ def fetch_stock_news_marketaux(tickers):
     # Parse the JSON data
     news_data = json.loads(data.decode('utf-8'))
     
+    # Print the entire news_data for debugging
+    print(news_data)  # Use this to check the structure of the response
+    
     return news_data.get('data', [])  # Return the news data or an empty list
 
 # Display news for the selected tickers in the sidebar
@@ -98,8 +101,14 @@ if tickers:
     news_items = fetch_stock_news_marketaux(uppercase_tickers)  # Fetch news for selected tickers
     
     for item in news_items:
-        st.sidebar.write(f"- **{item['title']}**: [Read more]({item['link']})")
-
+        # Check the keys in item to see how to access title and link
+        title = item.get('title')  # Adjust based on actual key name
+        link = item.get('link')  # Adjust based on actual key name
+        
+        if title and link:  # Ensure both title and link are available
+            st.sidebar.write(f"- **{title}**: [Read more]({link})")
+        else:
+            st.sidebar.write("News item is missing title or link.")
 
 # Fetch performance and predictions from the external service
 if tickers:
