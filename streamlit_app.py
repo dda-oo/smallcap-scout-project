@@ -156,3 +156,17 @@ def display_marketaux_news(news_items):
     else:
         st.write("No news available.")
 
+# Loop over selected tickers to fetch and display news
+for ticker in tickers:
+    st.write(f"#### News for {ticker}")
+
+    # Uncomment one of the following depending on which service you want to use:
+    
+    # Option 1: Fetch and display Yahoo Finance news
+    fetch_news_yahoo_finance(ticker)
+
+    # Option 2: Fetch and display Marketaux news
+    # news_items = fetch_stock_news_marketaux([ticker])
+    # display_marketaux_news(news_items)
+
+
