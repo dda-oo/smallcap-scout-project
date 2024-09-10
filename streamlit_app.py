@@ -18,15 +18,18 @@ st.set_page_config(
 # Sidebar layout for form inputs
 st.sidebar.header("Configure your analysis")
 
-# Centered logo in the sidebar
-st.sidebar.markdown(
-    """
-    <div style="text-align: center; margin-bottom: 20px;">
-        <img src="images/logo1.png" style="width: 120px;"/>
-    </div>
-    """,
-    unsafe_allow_html=True
-)
+# Sidebar layout for form inputs
+st.sidebar.header("Configure your analysis")
+
+# Add the logo to the sidebar, resized and smaller
+st.sidebar.image("images/logo1.png", width=120)  # Ensure logo is in the "images" folder
+
+# Title and description (centered on the main page)
+st.title("Stock Performance and Prediction Dashboard")
+st.write("""
+    Analyze stock performance, compare multiple tickers, predict future growth, and get investment recommendations. 
+    Choose a model to analyze predictions using various techniques.
+""")
 
 # Title and description (centered on the main page)
 st.title("Stock Performance and Prediction Dashboard")
