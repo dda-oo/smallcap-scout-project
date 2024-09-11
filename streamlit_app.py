@@ -79,38 +79,24 @@ if tickers:
             'threshold': f"{int(threshold * 100)}%",  # Convert to percentage
             'small_cap': small_cap
         }
-        
-        # Construct the full request URL for debugging and display it
-        request_url = requests.Request('GET', api_url, params=params).prepare().url
-        st.write(f"API Request URL: {request_url}")
-        
+
         # Send the GET request to the FastAPI backend
         response = requests.get(api_url, params=params)
 
         if response.status_code == 200:
             data = response.json()
-            predictions = data.get('predictions', [])
-            recommendations = data.get('recommendations', [])
 
-            # If the model is RNN, we show only predictions, otherwise, we show historical data and predictions
-            if model_choice == 'RNN':
-                st.write("### Predictions")
-                for year in ['quarter_ahead', 'year_ahead', '2_year_ahead']:
-                    st.write(f"{year}: {data['data'].get(year)}")
-            else:
-                # Display historical performance
-                ticker_performance = pd.DataFrame(data['data'])
-                st.write(f"Performance for {ticker}:")
-                st.line_chart(ticker_performance)
+            # Display the prediction and related information
+            st.write(f"### Ticker: {data['ticker']}")
+            st.write(f"**Model Type:** {data['model_type']}")
+            st.write(f"**Quarter:** {data['quarter']}")
+            st.write(f"**Sequence:** {data['sequence']}")
+            st.write(f"**Horizon:** {data['horizon']}")
+            st.write(f"**Threshold:** {data['threshold']}")
+            st.write(f"**Small Cap:** {data['small_cap']}")
+            st.write(f"**Prediction:** {data['prediction']} (1 = Worthy, 0 = Not Worthy)")
+            st.write(f"**Worthiness:** {data['worthiness']}")
 
-                # Display predictions
-                st.write("### Predictions")
-                for year in ['quarter_ahead', 'year_ahead', '2_year_ahead']:
-                    st.write(f"{year}: {data['data'].get(year)}")
-
-            # Display investment recommendations
-            st.write("### Investment Recommendations")
-            st.write(f"**{ticker}:** {recommendations[0]['advice']}" if recommendations else "No recommendations available.")
         else:
             st.write(f"Failed to fetch data for {ticker}. Response code: {response.status_code}")
             st.error("Failed to fetch data from the external service.")
