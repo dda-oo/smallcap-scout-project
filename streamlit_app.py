@@ -5,15 +5,15 @@ import requests
 # Set the favicon and page title
 st.set_page_config(
     page_title="Stock Predictor", 
-    page_icon="images/favicon.ico",  # Ensure favicon is in the "images" folder
-    layout="wide"  # Optional: Makes the layout wider for better visibility
+    page_icon="images/favicon.ico",  
+    layout="wide"  
 )
 
 # Sidebar layout for form inputs
 st.sidebar.header("Configure your analysis")
 
-# Add the logo to the sidebar, resized and smaller
-st.sidebar.image("images/logo1.png", width=170)  # Ensure logo is in the "images" folder
+# Add the logo to the sidebar
+st.sidebar.image("images/logo1.png", width=170)  
 
 # Title and description (centered on the main page)
 st.title("Stock Performance and Prediction Dashboard")
@@ -25,7 +25,7 @@ st.write("""
 # Load available tickers dynamically from a CSV file
 @st.cache
 def load_tickers():
-    tickers_df = pd.read_csv('data/sample.csv')  # Ensure this path is correct
+    tickers_df = pd.read_csv('data/sample.csv')  
     return tickers_df['Ticker'].tolist()
 
 available_tickers = load_tickers()
@@ -46,7 +46,7 @@ def quarter_range_slider():
 if model_choice != 'RNN':
     from_quarter, to_quarter = quarter_range_slider()
 else:
-    from_quarter, to_quarter = None, None  # If RNN is selected, we don't use quarter ranges
+    from_quarter, to_quarter = None, None  
 
 # Step 3: Select tickers dynamically using a multiselect box in the sidebar
 tickers = st.sidebar.multiselect('Select up to 5 tickers:', available_tickers)
@@ -71,17 +71,25 @@ if tickers:
         # Construct the API request URL
         api_url = 'https://smallcapscout-196636255726.europe-west1.run.app/predict'
         params = {
-            'ticker': ticker,  # Send ticker one by one
-            'model_type': model_choice.lower().replace(' ', '_'),  # API expects lowercase and underscore-separated model types
-            'quarter': to_quarter if to_quarter else '2024-Q3',  # Default to '2024-Q3' if quarter range is not set (RNN)
+            'ticker': ticker,  
+            'model_type': model_choice.lower().replace(' ', '_'),  
+            'quarter': to_quarter if to_quarter else '2024-Q3',  
             'sequence': sequence,
             'horizon': horizon,
-            'threshold': f"{int(threshold * 100)}%",  # Convert to percentage
+            'threshold': f"{int(threshold * 100)}%",  
             'small_cap': small_cap
         }
 
+        # Add debug information: show the URL and parameters being sent
+        st.write("### Debug Info")
+        st.write(f"API URL: {api_url}")
+        st.write(f"Parameters: {params}")
+
         # Send the GET request to the FastAPI backend
         response = requests.get(api_url, params=params)
+
+        # Add debug output: show the full request URL
+        st.write(f"Full request URL: {response.url}")
 
         if response.status_code == 200:
             data = response.json()
