@@ -101,58 +101,49 @@ if tickers:
         link = item.get('url', '#')  # Use 'url' or a fallback if the key is not found
         st.sidebar.write(f"- **{title}**: [Read more]({link})")
 
-# Fetch performance and predictions from the external service
+# Fetch performance and predictions for each ticker
 if tickers:
-    st.write(f"Displaying {model_choice} model predictions for tickers: {', '.join(tickers)}")
-    api_url = 'https://smallcapscout-196636255726.europe-west1.run.app/predict'
-    params = {
-        'tickers': ','.join(tickers),
-        'model_type': model_choice.lower().replace(' ', '_'),  # API expects lowercase and underscore-separated model types
-        'quarter': to_quarter if to_quarter else '2024-Q3',  # Default to '2024-Q3' if quarter range is not set (RNN)
-        'sequence': sequence,
-        'horizon': horizon,
-        'threshold': f"{int(threshold * 100)}%",  # Convert to percentage
-        'small_cap': small_cap
-    }
-    response = requests.get(api_url, params=params)
+    for ticker in tickers:
+        st.write(f"Displaying {model_choice} model predictions for {ticker}")
 
-    if response.status_code == 200:
-        data = response.json()
-        predictions = data.get('predictions', [])
-        recommendations = data.get('recommendations', [])
+        api_url = 'https://smallcapscout-196636255726.europe-west1.run.app/predict'
+        params = {
+            'ticker': ticker,  # Send ticker one by one
+            'model_type': model_choice.lower().replace(' ', '_'),  # API expects lowercase and underscore-separated model types
+            'quarter': to_quarter if to_quarter else '2024-Q3',  # Default to '2024-Q3' if quarter range is not set (RNN)
+            'sequence': sequence,
+            'horizon': horizon,
+            'threshold': f"{int(threshold * 100)}%",  # Convert to percentage
+            'small_cap': small_cap
+        }
+        response = requests.get(api_url, params=params)
 
-        # If the model is RNN, we show only predictions, otherwise, we show historical data and predictions
-        if model_choice == 'RNN':
-            st.write("### Predictions")
-            for ticker_data in predictions:
-                ticker = ticker_data['ticker']
-                st.write(f"Predictions for {ticker}:")
+        if response.status_code == 200:
+            data = response.json()
+            predictions = data.get('predictions', [])
+            recommendations = data.get('recommendations', [])
+
+            # If the model is RNN, we show only predictions, otherwise, we show historical data and predictions
+            if model_choice == 'RNN':
+                st.write("### Predictions")
                 for year in ['quarter_ahead', 'year_ahead', '2_year_ahead']:
-                    st.write(f"{year}: {ticker_data['data'].get(year)}")
-        else:
-            # Display historical performance
-            for ticker_data in predictions:
-                ticker = ticker_data['ticker']
-                ticker_performance = pd.DataFrame(ticker_data['data'])
+                    st.write(f"{year}: {data['data'].get(year)}")
+            else:
+                # Display historical performance
+                ticker_performance = pd.DataFrame(data['data'])
                 st.write(f"Performance for {ticker}:")
                 st.line_chart(ticker_performance)
 
-            # Display predictions
-            st.write("### Predictions")
-            for ticker_data in predictions:
-                ticker = ticker_data['ticker']
-                st.write(f"Predictions for {ticker}:")
+                # Display predictions
+                st.write("### Predictions")
                 for year in ['quarter_ahead', 'year_ahead', '2_year_ahead']:
-                    st.write(f"{year}: {ticker_data['data'].get(year)}")
+                    st.write(f"{year}: {data['data'].get(year)}")
 
-        # Display investment recommendations
-        st.write("### Investment Recommendations")
-        for recommendation in recommendations:
-            ticker = recommendation['ticker']
-            advice = recommendation['advice']
-            st.write(f"**{ticker}:** {advice}")
-    else:
-        st.error("Failed to fetch data from external service.")
+            # Display investment recommendations
+            st.write("### Investment Recommendations")
+            st.write(f"**{ticker}:** {recommendations[0]['advice']}" if recommendations else "No recommendations available.")
+        else:
+            st.error(f"Failed to fetch data for {ticker} from the external service.")
 
 # Display disclaimer at the bottom of the sidebar or main page
 st.sidebar.markdown("<br><br><hr>", unsafe_allow_html=True)  # Adds a separator line
