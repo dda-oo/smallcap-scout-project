@@ -57,16 +57,11 @@ if len(tickers) > 5:
 else:
     st.sidebar.write(f"Selected tickers: {', '.join(tickers)}")
 
-# Modify this line when preparing the parameters:
-params = {
-    'ticker': ticker,  
-    'model_type': model_choice.lower().replace(' ', '_'),  
-    'quarter': to_quarter if to_quarter else '2024-Q3',  
-    'sequence': sequence,
-    'horizon': horizon,
-    'threshold': f"{int(threshold * 100)}%",  
-    'small_cap': 'true' if small_cap else 'false'  # Convert to 'true'/'false' string
-}
+# Step 4: Define additional parameters for the FastAPI request
+sequence = st.sidebar.slider('Select Sequence Length:', min_value=1, max_value=12, value=4)
+horizon = st.sidebar.selectbox('Select Prediction Horizon:', ['quarter-ahead', 'year-ahead', '2_year-ahead'])
+threshold = st.sidebar.slider('Select Threshold:', min_value=0.1, max_value=1.0, step=0.1, value=0.5)
+small_cap = st.sidebar.checkbox('Small Cap Only?', value=True)
 
 # Fetch performance and predictions for each ticker
 if tickers:
@@ -76,13 +71,13 @@ if tickers:
         # Construct the API request URL
         api_url = 'https://smallcapscout-196636255726.europe-west1.run.app/predict'
         params = {
-            'ticker': ticker,  
-            'model_type': model_choice.lower().replace(' ', '_'),  
-            'quarter': to_quarter if to_quarter else '2024-Q3',  
-            'sequence': sequence,
-            'horizon': horizon,
-            'threshold': f"{int(threshold * 100)}%",  
-            'small_cap': small_cap
+        'ticker': ticker,  
+        'model_type': model_choice.lower().replace(' ', '_'),  
+        'quarter': to_quarter if to_quarter else '2024-Q3',  
+        'sequence': sequence,
+        'horizon': horizon,
+        'threshold': f"{int(threshold * 100)}%",  
+        'small_cap': 'true' if small_cap else 'false'  # Convert to 'true'/'false' string
         }
 
         # Add debug information: show the URL and parameters being sent
