@@ -69,16 +69,24 @@ if tickers:
         st.write(f"Displaying {model_choice} model predictions for {ticker}")
 
         # Construct the API request URL
-        api_url = 'https://smallcapscout-196636255726.europe-west1.run.app/predict'
+        api_url = 'https://smallcapscout-196636255726.europe-west1.run.app/predict'# Prepare the request parameters
         params = {
-        'ticker': ticker,  
-        'model_type': model_choice.lower().replace(' ', '_'),  
-        'quarter': to_quarter if to_quarter else '2024-Q3',  
-        'sequence': sequence,
-        'horizon': horizon,
-        'threshold': f"{int(threshold * 100)}%",  
-        'small_cap': 'true' if small_cap else 'false'  # Convert to 'true'/'false' string
+        'ticker': ticker,
+        'model_type': model_choice.lower().replace(' ', '_'),  # e.g., 'logistic_regression'
+        'quarter': to_quarter if to_quarter else '2023-Q2',  # Ensure the quarter is correctly set
+        'sequence': 4,  # Set a default or use input from the user
+        'horizon': 'year-ahead',  # Set to the desired horizon
+        'threshold': '50%',  # Adjust as necessary
+        'small_cap': 'true'  # Ensure this is a string
         }
+
+        # Construct the URL
+        api_url = f'https://smallcapscout-196636255726.europe-west1.run.app/predict?ticker={ticker}&model_type={params["model_type"]}&quarter={params["quarter"]}&sequence={params["sequence"]}&horizon={params["horizon"]}&threshold={params["threshold"]}&small_cap={params["small_cap"]}'
+        st.write(f"API Request URL: {api_url}")  # Log the request URL
+
+        # Make the API request
+        response = requests.get(api_url)
+
 
         # Add debug information: show the URL and parameters being sent
         st.write("### Debug Info")
