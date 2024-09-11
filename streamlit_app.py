@@ -1,6 +1,5 @@
 import streamlit as st
 import pandas as pd
-import numpy as np
 import requests
 import json
 import http.client
@@ -44,9 +43,10 @@ model_choice = st.sidebar.selectbox(
 # Step 2: Conditionally display the quarter range slider for models other than RNN
 if model_choice != 'RNN':
     def quarter_range_slider():
-        quarters = [(y, q) for y in range(2010, 2025) for q in ['Q1', 'Q2', 'Q3', 'Q4']]
+        # Limit to September 2024 (Q3 of 2024)
+        quarters = [(y, q) for y in range(2010, 2025) for q in ['Q1', 'Q2', 'Q3', 'Q4'] if not (y == 2024 and q == 'Q4')]
         quarter_labels = [f"{year}-{quarter}" for year, quarter in quarters]
-        return st.sidebar.select_slider('Select a quarter range:', options=quarter_labels, value=('2010-Q1', '2024-Q4'))
+        return st.sidebar.select_slider('Select a quarter range:', options=quarter_labels, value=('2010-Q1', '2024-Q3'))
 
     from_quarter, to_quarter = quarter_range_slider()
 else:
@@ -61,6 +61,12 @@ if len(tickers) > 5:
 else:
     st.sidebar.write(f"Selected tickers: {', '.join(tickers)}")
 
+# Step 4: Define additional parameters for the FastAPI request
+sequence = st.sidebar.slider('Select Sequence Length:', min_value=1, max_value=12, value=4)
+horizon = st.sidebar.selectbox('Select Prediction Horizon:', ['quarter-ahead', 'year-ahead', '2_year-ahead'])
+threshold = st.sidebar.slider('Select Threshold:', min_value=0.1, max_value=1.0, step=0.1, value=0.5)
+small_cap = st.sidebar.checkbox('Small Cap Only?', value=True)
+
 # Fetch news for the selected tickers from the Marketaux API
 def fetch_stock_news_marketaux(tickers):
     if not tickers:  # Check if there are selected tickers
@@ -70,7 +76,7 @@ def fetch_stock_news_marketaux(tickers):
     params = urllib.parse.urlencode({
         'api_token': 'ADMI4P1TMPl0bv5LUblXDRsitsoaRiLIfeFNNrlm',  # The actual API token
         'symbols': ','.join(tickers),
-        'limit': 5  # Could be adjusted this limit as needed
+        'limit': 5  # Adjust the limit as needed
     })
     
     conn.request('GET', '/v1/news/all?{}'.format(params))
@@ -101,9 +107,12 @@ if tickers:
     api_url = 'https://smallcapscout-196636255726.europe-west1.run.app/predict'
     params = {
         'tickers': ','.join(tickers),
-        'from_quarter': from_quarter,
-        'to_quarter': to_quarter,
-        'model': model_choice
+        'model_type': model_choice.lower().replace(' ', '_'),  # API expects lowercase and underscore-separated model types
+        'quarter': to_quarter if to_quarter else '2024-Q3',  # Default to '2024-Q3' if quarter range is not set (RNN)
+        'sequence': sequence,
+        'horizon': horizon,
+        'threshold': f"{int(threshold * 100)}%",  # Convert to percentage
+        'small_cap': small_cap
     }
     response = requests.get(api_url, params=params)
 
