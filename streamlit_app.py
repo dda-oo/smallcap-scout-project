@@ -41,13 +41,16 @@ model_choice = st.sidebar.selectbox(
     ['RNN', 'KNN', 'Logistic Regression']
 )
 
-# Step 2: Select the range of quarters (slider in the sidebar)
-def quarter_range_slider():
-    quarters = [(y, q) for y in range(2010, 2025) for q in ['Q1', 'Q2', 'Q3', 'Q4']]
-    quarter_labels = [f"{year}-{quarter}" for year, quarter in quarters]
-    return st.sidebar.select_slider('Select a quarter range:', options=quarter_labels, value=('2010-Q1', '2024-Q4'))
+# Step 2: Conditionally display the quarter range slider for models other than RNN
+if model_choice != 'RNN':
+    def quarter_range_slider():
+        quarters = [(y, q) for y in range(2010, 2025) for q in ['Q1', 'Q2', 'Q3', 'Q4']]
+        quarter_labels = [f"{year}-{quarter}" for year, quarter in quarters]
+        return st.sidebar.select_slider('Select a quarter range:', options=quarter_labels, value=('2010-Q1', '2024-Q4'))
 
-from_quarter, to_quarter = quarter_range_slider()
+    from_quarter, to_quarter = quarter_range_slider()
+else:
+    from_quarter, to_quarter = None, None  # If RNN is selected, we don't use quarter ranges
 
 # Step 3: Allow users to dynamically select tickers using a multiselect box in the sidebar
 tickers = st.sidebar.multiselect('Select up to 5 tickers:', available_tickers)
@@ -94,7 +97,7 @@ if tickers:
 
 # Fetch performance and predictions from the external service
 if tickers:
-    st.write(f"Displaying performance from {from_quarter} to {to_quarter} for tickers: {', '.join(tickers)}")
+    st.write(f"Displaying {model_choice} model predictions for tickers: {', '.join(tickers)}")
     api_url = 'https://smallcapscout-196636255726.europe-west1.run.app/predict'
     params = {
         'tickers': ','.join(tickers),
@@ -109,20 +112,29 @@ if tickers:
         predictions = data.get('predictions', [])
         recommendations = data.get('recommendations', [])
 
-        # Display historical performance
-        for ticker_data in predictions:
-            ticker = ticker_data['ticker']
-            ticker_performance = pd.DataFrame(ticker_data['data'])
-            st.write(f"Performance for {ticker}:")
-            st.line_chart(ticker_performance)
+        # If the model is RNN, we show only predictions, otherwise, we show historical data and predictions
+        if model_choice == 'RNN':
+            st.write("### Predictions")
+            for ticker_data in predictions:
+                ticker = ticker_data['ticker']
+                st.write(f"Predictions for {ticker}:")
+                for year in ['quarter_ahead', 'year_ahead', '2_year_ahead']:
+                    st.write(f"{year}: {ticker_data['data'].get(year)}")
+        else:
+            # Display historical performance
+            for ticker_data in predictions:
+                ticker = ticker_data['ticker']
+                ticker_performance = pd.DataFrame(ticker_data['data'])
+                st.write(f"Performance for {ticker}:")
+                st.line_chart(ticker_performance)
 
-        # Display predictions for quarter ahead, year ahead, 2 years ahead
-        st.write("### Predictions")
-        for ticker_data in predictions:
-            ticker = ticker_data['ticker']
-            st.write(f"Predictions for {ticker}:")
-            for year in ['quarter_ahead', 'year_ahead', '2_year_ahead']:
-                st.write(f"{year}: {ticker_data['data'].get(year)}")
+            # Display predictions
+            st.write("### Predictions")
+            for ticker_data in predictions:
+                ticker = ticker_data['ticker']
+                st.write(f"Predictions for {ticker}:")
+                for year in ['quarter_ahead', 'year_ahead', '2_year_ahead']:
+                    st.write(f"{year}: {ticker_data['data'].get(year)}")
 
         # Display investment recommendations
         st.write("### Investment Recommendations")
