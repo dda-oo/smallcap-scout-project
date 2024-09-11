@@ -1,10 +1,6 @@
 import streamlit as st
 import pandas as pd
 import requests
-import json
-import http.client
-import urllib.parse
-from yahoo_fin import stock_info as si  # For Yahoo Finance data
 
 # Set the favicon and page title
 st.set_page_config(
@@ -26,7 +22,7 @@ st.write("""
     Choose a model to analyze predictions using various techniques.
 """)
 
-# Load the available tickers dynamically from a CSV file
+# Load available tickers dynamically from a CSV file
 @st.cache
 def load_tickers():
     tickers_df = pd.read_csv('data/sample.csv')  # Ensure this path is correct
@@ -41,18 +37,18 @@ model_choice = st.sidebar.selectbox(
 )
 
 # Step 2: Conditionally display the quarter range slider for models other than RNN
-if model_choice != 'RNN':
-    def quarter_range_slider():
-        # Limit to September 2024 (Q3 of 2024)
-        quarters = [(y, q) for y in range(2010, 2025) for q in ['Q1', 'Q2', 'Q3', 'Q4'] if not (y == 2024 and q == 'Q4')]
-        quarter_labels = [f"{year}-{quarter}" for year, quarter in quarters]
-        return st.sidebar.select_slider('Select a quarter range:', options=quarter_labels, value=('2010-Q1', '2024-Q3'))
+def quarter_range_slider():
+    # Limit to September 2024 (Q3 of 2024)
+    quarters = [(y, q) for y in range(2010, 2025) for q in ['Q1', 'Q2', 'Q3', 'Q4'] if not (y == 2024 and q == 'Q4')]
+    quarter_labels = [f"{year}-{quarter}" for year, quarter in quarters]
+    return st.sidebar.select_slider('Select a quarter range:', options=quarter_labels, value=('2010-Q1', '2024-Q3'))
 
+if model_choice != 'RNN':
     from_quarter, to_quarter = quarter_range_slider()
 else:
     from_quarter, to_quarter = None, None  # If RNN is selected, we don't use quarter ranges
 
-# Step 3: Allow users to dynamically select tickers using a multiselect box in the sidebar
+# Step 3: Select tickers dynamically using a multiselect box in the sidebar
 tickers = st.sidebar.multiselect('Select up to 5 tickers:', available_tickers)
 
 # Limit tickers
@@ -67,45 +63,12 @@ horizon = st.sidebar.selectbox('Select Prediction Horizon:', ['quarter-ahead', '
 threshold = st.sidebar.slider('Select Threshold:', min_value=0.1, max_value=1.0, step=0.1, value=0.5)
 small_cap = st.sidebar.checkbox('Small Cap Only?', value=True)
 
-# Fetch news for the selected tickers from the Marketaux API
-def fetch_stock_news_marketaux(tickers):
-    if not tickers:  # Check if there are selected tickers
-        return []
-    
-    conn = http.client.HTTPSConnection('api.marketaux.com')
-    params = urllib.parse.urlencode({
-        'api_token': 'ADMI4P1TMPl0bv5LUblXDRsitsoaRiLIfeFNNrlm',  # The actual API token
-        'symbols': ','.join(tickers),
-        'limit': 5  # Adjust the limit as needed
-    })
-    
-    conn.request('GET', '/v1/news/all?{}'.format(params))
-    res = conn.getresponse()
-    
-    if res.status == 200:
-        data = res.read()
-        news_data = json.loads(data.decode('utf-8'))
-        return news_data.get('data', [])
-    else:
-        st.error("Failed to fetch news.")
-        return []
-
-# Display news for the selected tickers in the sidebar
-if tickers:
-    st.sidebar.header("Latest News")
-    news_data = fetch_stock_news_marketaux(tickers)  # Fetch news for selected tickers
-
-    # Display news items in the sidebar
-    for item in news_data:
-        title = item.get('title', 'No Title Available')  # Fallback if title is not found
-        link = item.get('url', '#')  # Use 'url' or a fallback if the key is not found
-        st.sidebar.write(f"- **{title}**: [Read more]({link})")
-
 # Fetch performance and predictions for each ticker
 if tickers:
     for ticker in tickers:
         st.write(f"Displaying {model_choice} model predictions for {ticker}")
 
+        # Construct the API request URL
         api_url = 'https://smallcapscout-196636255726.europe-west1.run.app/predict'
         params = {
             'ticker': ticker,  # Send ticker one by one
@@ -116,6 +79,12 @@ if tickers:
             'threshold': f"{int(threshold * 100)}%",  # Convert to percentage
             'small_cap': small_cap
         }
+        
+        # Construct the full request URL for debugging and display it
+        request_url = requests.Request('GET', api_url, params=params).prepare().url
+        st.write(f"API Request URL: {request_url}")
+        
+        # Send the GET request to the FastAPI backend
         response = requests.get(api_url, params=params)
 
         if response.status_code == 200:
@@ -143,9 +112,10 @@ if tickers:
             st.write("### Investment Recommendations")
             st.write(f"**{ticker}:** {recommendations[0]['advice']}" if recommendations else "No recommendations available.")
         else:
-            st.error(f"Failed to fetch data for {ticker} from the external service.")
+            st.write(f"Failed to fetch data for {ticker}. Response code: {response.status_code}")
+            st.error("Failed to fetch data from the external service.")
 
-# Display disclaimer at the bottom of the sidebar or main page
+# Disclaimer at the bottom of the sidebar or main page
 st.sidebar.markdown("<br><br><hr>", unsafe_allow_html=True)  # Adds a separator line
 st.sidebar.markdown(
     """
