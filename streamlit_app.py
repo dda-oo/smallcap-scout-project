@@ -18,7 +18,7 @@ st.set_page_config(
 st.sidebar.header("Configure your analysis")
 
 # Add the logo to the sidebar, resized and smaller
-st.sidebar.image("images/logo1.png", width=120)  # Ensure logo is in the "images" folder
+st.sidebar.image("images/logo1.png", width=150)  # Ensure logo is in the "images" folder
 
 # Title and description (centered on the main page)
 st.title("Stock Performance and Prediction Dashboard")
