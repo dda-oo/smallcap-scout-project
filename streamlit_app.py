@@ -133,12 +133,25 @@ def fetch_stock_news_marketaux(tickers):
         st.error("Failed to fetch news.")
         return []
 
-# Display news in the sidebar
+# Display news for the selected ticker in the sidebar
 if selected_ticker:
     st.sidebar.header("Latest News")
-    news_data = fetch_stock_news_marketaux([selected_ticker])
+    news_data = fetch_stock_news_marketaux([selected_ticker])  # Fetch news for the selected ticker
 
+    # Display news items in the sidebar
     for item in news_data:
-        title = item.get('title', 'No Title Available')
-        link = item.get('url', '#')
+        title = item.get('title', 'No Title Available')  # Fallback if title is not found
+        link = item.get('url', '#')  # Use 'url' or a fallback if the key is not found
         st.sidebar.write(f"- **{title}**: [Read more]({link})")
+
+# Display disclaimer at the bottom of the sidebar or main page
+st.sidebar.markdown("<br><br><hr>", unsafe_allow_html=True)  # Adds a separator line
+st.sidebar.markdown(
+    """
+    <div style='font-size: 0.9em; font-style: italic; color: #666;'>
+    This project is for educational purposes only. The predictions and information provided here are not financial advice.
+    Please consult a professional financial advisor for investment decisions.
+    </div>
+    """,
+    unsafe_allow_html=True
+)
