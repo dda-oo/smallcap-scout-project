@@ -75,9 +75,6 @@ def fetch_additional_info(ticker):
 # Fetch additional information for the selected ticker
 additional_info = fetch_additional_info(selected_ticker)
 
-# Display a note about currency and market cap
-#st.write("Please note: All figures are in USD. Market cap is shown in millions of dollars.")
-
 # Display additional information if available
 if additional_info:
     st.subheader("Additional Information about the Chosen Ticker and Its Last Status in the Stock Market")
@@ -90,7 +87,7 @@ if additional_info:
 
 # Fetch performance and predictions from the external service
 if selected_ticker:
-    #st.write(f"Displaying {model_choice.upper()} model predictions for ticker: {selected_ticker}")
+    st.write(f"Displaying {model_choice.upper()} model predictions for ticker: {selected_ticker}")
 
     # API URL
     api_url = 'https://smallcapscoutupdate-196636255726.europe-west1.run.app/predict'
@@ -110,10 +107,6 @@ if selected_ticker:
 
     if response.status_code == 200:
         data = response.json()
-
-        # Display the API response
-        st.write(f"**Ticker:** {data['ticker']}")
-        st.write(f"**Model Type:** {data['model_type']}")
 
         # Display prediction and worthiness
         worthiness = data.get('worthiness', 'No data available')
