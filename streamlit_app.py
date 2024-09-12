@@ -74,7 +74,9 @@ def fetch_additional_info(ticker):
 
 # Fetch additional information for the selected ticker
 additional_info = fetch_additional_info(selected_ticker)
-Please note: All figures are in USD. Market cap is shown in millions of dollars.
+
+# Display a note about currency and market cap
+st.write("Please note: All figures are in USD. Market cap is shown in millions of dollars.")
 
 # Display additional information if available
 if additional_info:
@@ -112,7 +114,7 @@ if selected_ticker:
         # Display the API response
         st.write(f"**Ticker:** {data['ticker']}")
         st.write(f"**Model Type:** {data['model_type']}")
-        
+
         # Display prediction and worthiness
         worthiness = data.get('worthiness', 'No data available')
         st.subheader("Prediction")
