@@ -29,7 +29,7 @@ st.write("""
 # Load the available tickers dynamically from a CSV file
 @st.cache
 def load_tickers():
-    tickers_df = pd.read_csv('data/cik_ticker_pairs.csv')  # Ensure this path is correct
+    tickers_df = pd.read_csv('data/sample.csv')  # Ensure this path is correct
     return tickers_df['Ticker'].tolist()
 
 available_tickers = load_tickers()
@@ -60,7 +60,7 @@ if len(tickers) > 5:
 else:
     st.sidebar.write(f"Selected tickers: {', '.join(tickers)}")
 
-# Fetch stock news for the selected tickers from Marketaux API
+# Fetch news for the selected tickers from the Marketaux API
 def fetch_stock_news_marketaux(tickers):
     if not tickers:  # Check if there are selected tickers
         return []
@@ -69,7 +69,7 @@ def fetch_stock_news_marketaux(tickers):
     params = urllib.parse.urlencode({
         'api_token': 'ADMI4P1TMPl0bv5LUblXDRsitsoaRiLIfeFNNrlm',  # The actual API token
         'symbols': ','.join(tickers),
-        'limit': 5  # Could be adjusted this limit as needed
+        'limit': 5  # Adjust this limit as needed
     })
     
     conn.request('GET', '/v1/news/all?{}'.format(params))
@@ -94,22 +94,33 @@ if tickers:
         link = item.get('url', '#')  # Use 'url' or a fallback if the key is not found
         st.sidebar.write(f"- **{title}**: [Read more]({link})")
 
-# Fetch performance and predictions from the external service
+# Fetch performance and predictions from the external FastAPI service
 if tickers:
     st.write(f"Displaying {model_choice} model predictions for tickers: {', '.join(tickers)}")
-    api_url = f'https://smallcapscout-196636255726.europe-west1.run.app/predict?ticker={tickers[0]}&model_type={model_choice.lower().replace(" ", "_")}&quarter={to_quarter if to_quarter else "2023-Q2"}&sequence=4&horizon=year-ahead&threshold=50%25&small_cap=True'
     
-    response = requests.get(api_url)
+    for ticker in tickers:
+        api_url = f'https://smallcapscout-196636255726.europe-west1.run.app/predict'
+        params = {
+            'ticker': ticker,
+            'model_type': model_choice.lower().replace(" ", "_"),
+            'quarter': to_quarter if to_quarter else "2023-Q2",
+            'sequence': 4,
+            'horizon': 'year-ahead',
+            'threshold': '50%25',
+            'small_cap': 'True'
+        }
+        
+        response = requests.get(api_url, params=params)
 
-    if response.status_code == 200:
-        data = response.json()
-        st.write(f"Model Type: {data['model_type']}")
-        st.write(f"Prediction for {data['ticker']}: {data['prediction']}")
-        st.write(f"Worthiness: {data['worthiness']}")
-        st.write(f"Quarter: {data['quarter']}")
-    else:
-        st.write(f"Failed to fetch data for {tickers[0]}. Response code: {response.status_code}")
-        st.error("Failed to fetch data from the external service.")
+        if response.status_code == 200:
+            data = response.json()
+            st.write(f"Model: **{data['model_type']}** for **{data['ticker']}**")
+            st.write(f"Prediction: {data['prediction']}")
+            st.write(f"Worthiness: {data['worthiness']}")
+            st.write(f"Quarter: {data['quarter']}")
+        else:
+            st.write(f"Failed to fetch data for {ticker}. Response code: {response.status_code}")
+            st.error("Failed to fetch data from the external service.")
 
 # Display disclaimer at the bottom of the sidebar or main page
 st.sidebar.markdown("<br><br><hr>", unsafe_allow_html=True)  # Adds a separator line
