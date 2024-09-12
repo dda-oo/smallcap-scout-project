@@ -1,19 +1,25 @@
-# 🎈 Blank app template
+# Stock Analysis and Prediction Dashboard
 
-A simple Streamlit app template for you to modify!
+## Introduction
 
-[![Open in Streamlit](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://blank-app-template.streamlit.app/)
+Welcome to the **Stock Analysis and Prediction Dashboard**! This application is designed to provide users with valuable insights into stock performance and future growth predictions for individual stock tickers.
 
-### How to run it on your own machine
+## Overview
 
-1. Install the requirements
+In an ever-changing financial landscape, making informed investment decisions is crucial. This dashboard empowers users to analyze stocks using advanced predictive models, including RNN (Recurrent Neural Network) and XGB (Extreme Gradient Boosting). 
 
-   ```
-   $ pip install -r requirements.txt
-   ```
+## Key Features
 
-2. Run the app
+- **Dynamic Ticker Selection:** Choose from a comprehensive list of available stock tickers.
+- **Model Selection:** Analyze stock predictions using different machine learning models, allowing for a comparative analysis of results.
+- **Quarterly Analysis:** Select specific quarters for analysis, with the option to explore historical performance from 2010 to the present.
+- **Investment Recommendations:** Receive insights on stock worthiness based on predictive analytics, with additional information on market cap, revenues, and more.
+- **Educational Purpose:** Designed primarily for educational use, this application helps users understand stock market dynamics and analytics without providing financial advice.
 
-   ```
-   $ streamlit run streamlit_app.py
-   ```
+## HOWto
+
+To get started, simply select your desired ticker, model, and parameters in the sidebar. View the predictions along with relevant financial metrics and explore additional resources for further analysis to make more informed investment decisions.
+
+## Final Note
+
+Thank you for using the Stock Analysis and Prediction Dashboard. We hope this tool enhances your understanding of stock market dynamics and assists you in your investment journey.
