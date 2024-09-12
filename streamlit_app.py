@@ -76,7 +76,7 @@ def fetch_additional_info(ticker):
 additional_info = fetch_additional_info(selected_ticker)
 
 # Display a note about currency and market cap
-st.write("Please note: All figures are in USD. Market cap is shown in millions of dollars.")
+#st.write("Please note: All figures are in USD. Market cap is shown in millions of dollars.")
 
 # Display additional information if available
 if additional_info:
