@@ -24,26 +24,26 @@ st.write("""
 """)
 
 # Load the available tickers dynamically from a CSV file
-@st.cache
+@st.cache_data
 def load_tickers():
     tickers_df = pd.read_csv('data/cik_ticker_pairs.csv')  # Ensure this path is correct
     return tickers_df['Ticker'].tolist()
 
 available_tickers = load_tickers()
 
-# Step 1: Select a model from the dropdown (limited to RNN and XGB)
+# Step 1: Select a model from the dropdown (limited to rnn and xgb)
 model_choice = st.sidebar.selectbox(
     'Choose a model for prediction:',
-    ['RNN', 'XGB']
+    ['rnn', 'xgb']  # Models in lowercase
 )
 
-# Step 2: Select a quarter (not a range, and limited to 2024-Q3)
+# Step 2: Select a quarter (not a range, and limited to 2024-Q2)
 def quarter_range_slider():
-    # Limit to September 2024 (Q3 of 2024) and go back to 2010
-    quarters = [(y, q) for y in range(2010, 2025) for q in ['Q1', 'Q2', 'Q3', 'Q4'] if not (y == 2024 and q == 'Q4')]
+    # Limit to June 2024 (Q2 of 2024) and go back to 2010
+    quarters = [(y, q) for y in range(2010, 2025) for q in ['Q1', 'Q2', 'Q3', 'Q4'] if not (y == 2024 and q == 'Q3')]
     quarter_labels = [f"{year}-{quarter}" for year, quarter in quarters]
 
-    # Reverse the order to show from 2024-Q3 down to 2010-Q1
+    # Reverse the order to show from 2024-Q2 down to 2010-Q1
     quarter_labels.reverse()
 
     return st.sidebar.selectbox('Select a quarter:', options=quarter_labels, index=0)
@@ -54,10 +54,9 @@ selected_quarter = quarter_range_slider()
 # Step 3: Select a single ticker (limited to one ticker at a time)
 selected_ticker = st.sidebar.selectbox('Select a ticker:', available_tickers)
 
-# Step 4: Additional parameters for the request
-sequence = st.sidebar.slider('Select Sequence Length:', min_value=1, max_value=12, value=4)
-horizon = st.sidebar.selectbox('Select Prediction Horizon:', ['quarter-ahead', 'year-ahead'])
-threshold = st.sidebar.slider('Select Threshold (%):', min_value=10, max_value=100, step=10, value=50)
+# Step 4: Additional parameters for the request (sequence removed)
+horizon = st.sidebar.selectbox('Select Prediction Horizon:', ['quarter-ahead', 'year-ahead', 'two-years-ahead'])
+threshold = st.sidebar.selectbox('Growth Threshold (%):', [30, 50])  # Offering only 30% and 50% as options
 small_cap = st.sidebar.checkbox('Small Cap Only?', value=True)
 
 # Ensure only one ticker is processed
@@ -65,19 +64,18 @@ st.sidebar.write(f"Selected ticker: {selected_ticker}")
 
 # Fetch performance and predictions from the external service
 if selected_ticker:
-    st.write(f"Displaying {model_choice} model predictions for ticker: {selected_ticker}")
+    st.write(f"Displaying {model_choice.upper()} model predictions for ticker: {selected_ticker}")
 
     # API URL
-    api_url = 'https://smallcapscout-196636255726.europe-west1.run.app/predict'
+    api_url = 'https://smallcapscoutupdate-196636255726.europe-west1.run.app/predict'
 
     # Parameters for the FastAPI request
     params = {
         'ticker': selected_ticker,
-        'model_type': model_choice.lower(),  # API expects lowercase model type
+        'model_type': model_choice,  # API expects lowercase model type
         'quarter': selected_quarter,  # The selected quarter
-        'sequence': sequence,  # Sequence length
         'horizon': horizon,  # Prediction horizon
-        'threshold': f"{threshold}%",  # Threshold as a percentage
+        'threshold': f"{threshold}%",  # Threshold as a percentage (30% or 50%)
         'small_cap': str(small_cap).lower()  # Convert boolean to lowercase string ('true'/'false')
     }
 
@@ -93,7 +91,6 @@ if selected_ticker:
         st.write(f"**Prediction:** {data['prediction']}")
         st.write(f"**Worthiness:** {data['worthiness']}")
         st.write(f"**Quarter:** {data['quarter']}")
-        st.write(f"**Sequence:** {data['sequence']}")
         st.write(f"**Horizon:** {data['horizon']}")
         st.write(f"**Threshold:** {data['threshold']}")
         st.write(f"**Small Cap:** {data['small_cap']}")
