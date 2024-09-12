@@ -34,7 +34,7 @@ def load_tickers():
 
 available_tickers = load_tickers()
 
-# Step 1: Select a model from the dropdown (limited to RNN and XGB)
+# Step 1: Select a model from the dropdown (limited to rnn and xgb)
 model_choice = st.sidebar.selectbox(
     'Choose a model for prediction:',
     ['rnn', 'xgb']  # Updated to lowercase as per request
@@ -104,8 +104,10 @@ if selected_ticker:
         worthiness = data.get('worthiness')
         if worthiness == 'worthy':
             st.write("Based on our deep analytics, this stock is deemed **worthy** for investment. 🚀")
-        else:
+        elif worthiness == 'not worthy':
             st.write("Based on our deep analytics, this stock is **not worthy** of investment at this time. 💼")
+        else:
+            st.error("Unexpected worthiness response.")
 
     else:
         st.error(f"Failed to fetch prediction data for {selected_ticker}. Response code: {response.status_code}")
