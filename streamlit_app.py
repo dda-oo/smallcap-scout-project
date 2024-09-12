@@ -112,40 +112,6 @@ if selected_ticker:
     else:
         st.error(f"Failed to fetch prediction data for {selected_ticker}. Response code: {response.status_code}")
 
-# Fetch news for the selected ticker
-def fetch_stock_news_marketaux(tickers):
-    if not tickers:  
-        return []
-
-    conn = http.client.HTTPSConnection('api.marketaux.com')
-    params = urllib.parse.urlencode({
-        'api_token': 'ADMI4P1TMPl0bv5LUblXDRsitsoaRiLIfeFNNrlm',
-        'symbols': ','.join(tickers),
-        'limit': 5
-    })
-
-    conn.request('GET', '/v1/news/all?{}'.format(params))
-    res = conn.getresponse()
-
-    if res.status == 200:
-        data = res.read()
-        news_data = json.loads(data.decode('utf-8'))
-        return news_data.get('data', [])
-    else:
-        st.error("Failed to fetch news.")
-        return []
-
-# Display news for the selected ticker in the sidebar
-if selected_ticker:
-    st.sidebar.header("Latest News")
-    news_data = fetch_stock_news_marketaux([selected_ticker])  # Fetch news for the selected ticker
-
-    # Display news items in the sidebar
-    for item in news_data:
-        title = item.get('title', 'No Title Available')  # Fallback if title is not found
-        link = item.get('url', '#')  # Use 'url' or a fallback if the key is not found
-        st.sidebar.write(f"- **{title}**: [Read more]({link})")
-
 # Display disclaimer at the bottom of the sidebar or main page
 st.sidebar.markdown("<br><br><hr>", unsafe_allow_html=True)  # Adds a separator line
 st.sidebar.markdown(
