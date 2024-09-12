@@ -1,6 +1,5 @@
 import streamlit as st
 import pandas as pd
-import numpy as np
 import requests
 import json
 import http.client
@@ -70,7 +69,7 @@ def fetch_stock_news_marketaux(tickers):
     params = urllib.parse.urlencode({
         'api_token': 'ADMI4P1TMPl0bv5LUblXDRsitsoaRiLIfeFNNrlm',  # The actual API token
         'symbols': ','.join(tickers),
-        'limit': 5  # Could be adjusted this limit as needed
+        'limit': 5  # Adjust this limit as needed
     })
     
     conn.request('GET', '/v1/news/all?{}'.format(params))
@@ -95,55 +94,40 @@ if tickers:
         link = item.get('url', '#')  # Use 'url' or a fallback if the key is not found
         st.sidebar.write(f"- **{title}**: [Read more]({link})")
 
-# Fetch performance and predictions from the external service
+# Fetch performance and predictions from the external FastAPI service
 if tickers:
     st.write(f"Displaying {model_choice} model predictions for tickers: {', '.join(tickers)}")
-    api_url = 'https://smallcapscout-196636255726.europe-west1.run.app/predict'
-    params = {
-        'tickers': ','.join(tickers),
-        'from_quarter': from_quarter,
-        'to_quarter': to_quarter,
-        'model': model_choice
-    }
-    response = requests.get(api_url, params=params)
+    
+    for ticker in tickers:
+        api_url = f'https://smallcapscout-196636255726.europe-west1.run.app/predict'
+        params = {
+            'ticker': ticker,
+            'model_type': model_choice.lower().replace(" ", "_"),
+            'quarter': to_quarter if to_quarter else "2023-Q2",
+            'sequence': 4,
+            'horizon': 'year-ahead',
+            'threshold': '50%25',
+            'small_cap': 'True'
+        }
+        
+        response = requests.get(api_url, params=params)
 
-    if response.status_code == 200:
-        data = response.json()
-        predictions = data.get('predictions', [])
-        recommendations = data.get('recommendations', [])
+        if response.status_code == 200:
+            data = response.json()
 
-        # If the model is RNN, we show only predictions, otherwise, we show historical data and predictions
-        if model_choice == 'RNN':
-            st.write("### Predictions")
-            for ticker_data in predictions:
-                ticker = ticker_data['ticker']
-                st.write(f"Predictions for {ticker}:")
-                for year in ['quarter_ahead', 'year_ahead', '2_year_ahead']:
-                    st.write(f"{year}: {ticker_data['data'].get(year)}")
+            # Displaying the fetched data from FastAPI
+            st.write(f"**Ticker:** {data['ticker']}")
+            st.write(f"**Model Type:** {data['model_type']}")
+            st.write(f"**Prediction:** {data['prediction']}")
+            st.write(f"**Worthiness:** {data['worthiness']}")
+            st.write(f"**Quarter:** {data['quarter']}")
+            st.write(f"**Sequence:** {data['sequence']}")
+            st.write(f"**Horizon:** {data['horizon']}")
+            st.write(f"**Threshold:** {data['threshold']}")
+            st.write(f"**Small Cap:** {data['small_cap']}")
         else:
-            # Display historical performance
-            for ticker_data in predictions:
-                ticker = ticker_data['ticker']
-                ticker_performance = pd.DataFrame(ticker_data['data'])
-                st.write(f"Performance for {ticker}:")
-                st.line_chart(ticker_performance)
-
-            # Display predictions
-            st.write("### Predictions")
-            for ticker_data in predictions:
-                ticker = ticker_data['ticker']
-                st.write(f"Predictions for {ticker}:")
-                for year in ['quarter_ahead', 'year_ahead', '2_year_ahead']:
-                    st.write(f"{year}: {ticker_data['data'].get(year)}")
-
-        # Display investment recommendations
-        st.write("### Investment Recommendations")
-        for recommendation in recommendations:
-            ticker = recommendation['ticker']
-            advice = recommendation['advice']
-            st.write(f"**{ticker}:** {advice}")
-    else:
-        st.error("Failed to fetch data from external service.")
+            st.write(f"Failed to fetch data for {ticker}. Response code: {response.status_code}")
+            st.error("Failed to fetch data from the external service.")
 
 # Display disclaimer at the bottom of the sidebar or main page
 st.sidebar.markdown("<br><br><hr>", unsafe_allow_html=True)  # Adds a separator line
