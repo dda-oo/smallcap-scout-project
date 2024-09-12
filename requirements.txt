@@ -2,6 +2,4 @@ streamlit
 pandas
 numpy
 matplotlib
-yahoo_fin
 requests
-yfinance

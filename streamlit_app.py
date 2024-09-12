@@ -42,10 +42,10 @@ def quarter_range_slider():
     # Limit to September 2024 (Q3 of 2024) and go back to 2010
     quarters = [(y, q) for y in range(2010, 2025) for q in ['Q1', 'Q2', 'Q3', 'Q4'] if not (y == 2024 and q == 'Q4')]
     quarter_labels = [f"{year}-{quarter}" for year, quarter in quarters]
-    
+
     # Reverse the order to show from 2024-Q3 down to 2010-Q1
     quarter_labels.reverse()
-    
+
     return st.sidebar.selectbox('Select a quarter:', options=quarter_labels, index=0)
 
 # Call the function to get the selected quarter
@@ -66,10 +66,10 @@ st.sidebar.write(f"Selected ticker: {selected_ticker}")
 # Fetch performance and predictions from the external service
 if selected_ticker:
     st.write(f"Displaying {model_choice} model predictions for ticker: {selected_ticker}")
-    
+
     # API URL
     api_url = 'https://smallcapscout-196636255726.europe-west1.run.app/predict'
-    
+
     # Parameters for the FastAPI request
     params = {
         'ticker': selected_ticker,
@@ -80,13 +80,13 @@ if selected_ticker:
         'threshold': f"{threshold}%",  # Threshold as a percentage
         'small_cap': str(small_cap).lower()  # Convert boolean to lowercase string ('true'/'false')
     }
-    
+
     # Send the request to the FastAPI endpoint
     response = requests.get(api_url, params=params)
-    
+
     if response.status_code == 200:
         data = response.json()
-        
+
         # Display the API response
         st.write(f"**Ticker:** {data['ticker']}")
         st.write(f"**Model Type:** {data['model_type']}")
