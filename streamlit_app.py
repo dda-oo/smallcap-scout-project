@@ -1,19 +1,23 @@
 import streamlit as st
 import pandas as pd
 import requests
+import json
+import http.client
+import urllib.parse
+from yahoo_fin import stock_info as si  # For Yahoo Finance data
 
 # Set the favicon and page title
 st.set_page_config(
     page_title="Stock Predictor", 
-    page_icon="images/favicon.ico",  
-    layout="wide"  
+    page_icon="images/favicon.ico",  # Ensure favicon is in the "images" folder
+    layout="wide"  # Optional: Makes the layout wider for better visibility
 )
 
 # Sidebar layout for form inputs
 st.sidebar.header("Configure your analysis")
 
-# Add the logo to the sidebar
-st.sidebar.image("images/logo1.png", width=170)  
+# Add the logo to the sidebar, resized and smaller
+st.sidebar.image("images/logo1.png", width=170)  # Ensure logo is in the "images" folder
 
 # Title and description (centered on the main page)
 st.title("Stock Performance and Prediction Dashboard")
@@ -22,10 +26,10 @@ st.write("""
     Choose a model to analyze predictions using various techniques.
 """)
 
-# Load available tickers dynamically from a CSV file
+# Load the available tickers dynamically from a CSV file
 @st.cache
 def load_tickers():
-    tickers_df = pd.read_csv('data/sample.csv')  
+    tickers_df = pd.read_csv('data/sample.csv')  # Ensure this path is correct
     return tickers_df['Ticker'].tolist()
 
 available_tickers = load_tickers()
@@ -37,18 +41,17 @@ model_choice = st.sidebar.selectbox(
 )
 
 # Step 2: Conditionally display the quarter range slider for models other than RNN
-def quarter_range_slider():
-    # Limit to September 2024 (Q3 of 2024)
-    quarters = [(y, q) for y in range(2010, 2025) for q in ['Q1', 'Q2', 'Q3', 'Q4'] if not (y == 2024 and q == 'Q4')]
-    quarter_labels = [f"{year}-{quarter}" for year, quarter in quarters]
-    return st.sidebar.select_slider('Select a quarter range:', options=quarter_labels, value=('2010-Q1', '2024-Q3'))
-
 if model_choice != 'RNN':
+    def quarter_range_slider():
+        quarters = [(y, q) for y in range(2010, 2025) for q in ['Q1', 'Q2', 'Q3', 'Q4']]
+        quarter_labels = [f"{year}-{quarter}" for year, quarter in quarters]
+        return st.sidebar.select_slider('Select a quarter range:', options=quarter_labels, value=('2010-Q1', '2024-Q4'))
+
     from_quarter, to_quarter = quarter_range_slider()
 else:
-    from_quarter, to_quarter = None, None  
+    from_quarter, to_quarter = None, None  # If RNN is selected, we don't use quarter ranges
 
-# Step 3: Select tickers dynamically using a multiselect box in the sidebar
+# Step 3: Allow users to dynamically select tickers using a multiselect box in the sidebar
 tickers = st.sidebar.multiselect('Select up to 5 tickers:', available_tickers)
 
 # Limit tickers
@@ -57,67 +60,58 @@ if len(tickers) > 5:
 else:
     st.sidebar.write(f"Selected tickers: {', '.join(tickers)}")
 
-# Step 4: Define additional parameters for the FastAPI request
-sequence = st.sidebar.slider('Select Sequence Length:', min_value=1, max_value=12, value=4)
-horizon = st.sidebar.selectbox('Select Prediction Horizon:', ['quarter-ahead', 'year-ahead', '2_year-ahead'])
-threshold = st.sidebar.slider('Select Threshold:', min_value=0.1, max_value=1.0, step=0.1, value=0.5)
-small_cap = st.sidebar.checkbox('Small Cap Only?', value=True)
+# Fetch stock news for the selected tickers from Marketaux API
+def fetch_stock_news_marketaux(tickers):
+    if not tickers:  # Check if there are selected tickers
+        return []
+    
+    conn = http.client.HTTPSConnection('api.marketaux.com')
+    params = urllib.parse.urlencode({
+        'api_token': 'ADMI4P1TMPl0bv5LUblXDRsitsoaRiLIfeFNNrlm',  # The actual API token
+        'symbols': ','.join(tickers),
+        'limit': 5  # Could be adjusted this limit as needed
+    })
+    
+    conn.request('GET', '/v1/news/all?{}'.format(params))
+    res = conn.getresponse()
+    
+    if res.status == 200:
+        data = res.read()
+        news_data = json.loads(data.decode('utf-8'))
+        return news_data.get('data', [])
+    else:
+        st.error("Failed to fetch news.")
+        return []
 
-# Fetch performance and predictions for each ticker
+# Display news for the selected tickers in the sidebar
 if tickers:
-    for ticker in tickers:
-        st.write(f"Displaying {model_choice} model predictions for {ticker}")
+    st.sidebar.header("Latest News")
+    news_data = fetch_stock_news_marketaux(tickers)  # Fetch news for selected tickers
 
-        # Construct the API request URL
-        api_url = 'https://smallcapscout-196636255726.europe-west1.run.app/predict'# Prepare the request parameters
-        params = {
-        'ticker': ticker,
-        'model_type': model_choice.lower().replace(' ', '_'),  # e.g., 'logistic_regression'
-        'quarter': to_quarter if to_quarter else '2023-Q2',  # Ensure the quarter is correctly set
-        'sequence': 4,  # Set a default or use input from the user
-        'horizon': 'year-ahead',  # Set to the desired horizon
-        'threshold': '50%',  # Adjust as necessary
-        'small_cap': 'true'  # Ensure this is a string
-        }
+    # Display news items in the sidebar
+    for item in news_data:
+        title = item.get('title', 'No Title Available')  # Fallback if title is not found
+        link = item.get('url', '#')  # Use 'url' or a fallback if the key is not found
+        st.sidebar.write(f"- **{title}**: [Read more]({link})")
 
-        # Construct the URL
-        api_url = f'https://smallcapscout-196636255726.europe-west1.run.app/predict?ticker={ticker}&model_type={params["model_type"]}&quarter={params["quarter"]}&sequence={params["sequence"]}&horizon={params["horizon"]}&threshold={params["threshold"]}&small_cap={params["small_cap"]}'
-        st.write(f"API Request URL: {api_url}")  # Log the request URL
+# Fetch performance and predictions from the external service
+if tickers:
+    st.write(f"Displaying {model_choice} model predictions for tickers: {', '.join(tickers)}")
+    api_url = f'https://smallcapscout-196636255726.europe-west1.run.app/predict?ticker={tickers[0]}&model_type={model_choice.lower().replace(" ", "_")}&quarter={to_quarter if to_quarter else "2023-Q2"}&sequence=4&horizon=year-ahead&threshold=50%25&small_cap=True'
+    
+    response = requests.get(api_url)
 
-        # Make the API request
-        response = requests.get(api_url)
+    if response.status_code == 200:
+        data = response.json()
+        st.write(f"Model Type: {data['model_type']}")
+        st.write(f"Prediction for {data['ticker']}: {data['prediction']}")
+        st.write(f"Worthiness: {data['worthiness']}")
+        st.write(f"Quarter: {data['quarter']}")
+    else:
+        st.write(f"Failed to fetch data for {tickers[0]}. Response code: {response.status_code}")
+        st.error("Failed to fetch data from the external service.")
 
-
-        # Add debug information: show the URL and parameters being sent
-        st.write("### Debug Info")
-        st.write(f"API URL: {api_url}")
-        st.write(f"Parameters: {params}")
-
-        # Send the GET request to the FastAPI backend
-        response = requests.get(api_url, params=params)
-
-        # Add debug output: show the full request URL
-        st.write(f"Full request URL: {response.url}")
-
-        if response.status_code == 200:
-            data = response.json()
-
-            # Display the prediction and related information
-            st.write(f"### Ticker: {data['ticker']}")
-            st.write(f"**Model Type:** {data['model_type']}")
-            st.write(f"**Quarter:** {data['quarter']}")
-            st.write(f"**Sequence:** {data['sequence']}")
-            st.write(f"**Horizon:** {data['horizon']}")
-            st.write(f"**Threshold:** {data['threshold']}")
-            st.write(f"**Small Cap:** {data['small_cap']}")
-            st.write(f"**Prediction:** {data['prediction']} (1 = Worthy, 0 = Not Worthy)")
-            st.write(f"**Worthiness:** {data['worthiness']}")
-
-        else:
-            st.write(f"Failed to fetch data for {ticker}. Response code: {response.status_code}")
-            st.error("Failed to fetch data from the external service.")
-
-# Disclaimer at the bottom of the sidebar or main page
+# Display disclaimer at the bottom of the sidebar or main page
 st.sidebar.markdown("<br><br><hr>", unsafe_allow_html=True)  # Adds a separator line
 st.sidebar.markdown(
     """
