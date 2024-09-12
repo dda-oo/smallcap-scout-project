@@ -2,23 +2,75 @@
 
 ## Introduction
 
-Welcome to the **Stock Analysis and Prediction Dashboard**! This application is designed to provide users with valuable insights into stock performance and future growth predictions for individual stock tickers.
+Welcome to the **Stock Analysis and Prediction Dashboard**! This application is designed to provide users with valuable insights into stock performance and future growth predictions for individual stock tickers. This project serves as the front end of the [Small-Cap Scout backend repository](https://github.com/cnance09/Small-Cap-Scout).
 
-## Overview
+## Project Overview
 
-In an ever-changing financial landscape, making informed investment decisions is crucial. This dashboard empowers users to analyze stocks using advanced predictive models, including RNN (Recurrent Neural Network) and XGB (Extreme Gradient Boosting). 
+### Small-Cap Scout
+
+**Project Date:** 13.09.2024  
+**Le Wagon Batch:** 1751  
+
+**Team Members:**  
+- Christopher Nance  
+- Eoin Gaynard  
+- Reza Mehdizadeh  
+- Daryoosh Dehestani  
+
+### Objectives
+
+- **Finds small-cap US companies** with a high likelihood of extraordinary returns based on fundamentals.
+- **Employs the latest machine learning** and neural network techniques to identify high-performing stocks.
+- **Provides insights** for individual and professional investors.
+- **Forecast Stock Performance:** Predict value growth at quarter-ahead, year-ahead, and two-year horizons.
+- **Dynamic User Interface:** Investors can customize model inputs.
+- **Investment Recommendations:** Probability of success reported for each stock, helping users understand historical expectations and analyze past market trends.
 
 ## Key Features
 
-- **Dynamic Ticker Selection:** Choose from a comprehensive list of available stock tickers.
-- **Model Selection:** Analyze stock predictions using different machine learning models, allowing for a comparative analysis of results.
-- **Quarterly Analysis:** Select specific quarters for analysis, with the option to explore historical performance from 2010 to the present.
-- **Investment Recommendations:** Receive insights on stock worthiness based on predictive analytics, with additional information on market cap, revenues, and more.
-- **Educational Purpose:** Designed primarily for educational use, this application helps users understand stock market dynamics and analytics without providing financial advice.
+- **SEC Edgar Financial Statements (2009 - Q2 2024):** Financial data of US companies (optional extension).
+- **Marketaux API:** Real-time stock news and company insights.
+- **Yahoo Finance API:** Historical stock pricing and performance data.
+- **Google Trends & Sentiment Analysis:** To capture market sentiment.
+- **Economic Data & Trade Flows:** FRED, CME, MIT Observatory.
 
-## HOWto
+## Aspects of Our Dataset
+
+- **Data Size:** Over 170k Observations from more than 5,800 companies with 59 features.
+- **Models Employed:**
+  - **Baseline:**
+    - Logistic Regression: Classification tasks for predicting company growth.
+    - KNN (K-Nearest Neighbors): Classify stocks based on features of k-neighbors.
+  - **Main Model:**
+    - XG Boost: Cross-sectional predictions on future growth.
+    - RNN (Recurrent Neural Networks): Time-series predictions for future growth.
+
+### Parameters for Prediction
+
+- **TICKER:** Stock symbol
+- **Model Type:** XG Boost & Recurrent Neural Network (xgb | rnn)
+- **Quarter:** Quarter of prediction (e.g., 2024-Q2)
+- **Horizon:** Time horizon of prediction (quarter-ahead, year-ahead, two-years-ahead)
+- **Threshold:** Growth percentage threshold for ‘successful’ companies (30% | 50%)
+- **Small Cap:** Whether to only consider small companies (True | False)
+
+## API Demo
+
+### Output & Performance
+
+- **2 Year Market Cap Prediction:** Threshold: 50% growth
+  - **Accuracy:** 72%
+  - **Precision:** 65%
+  
+Additional features include sentiment data, news analysis, and trade flows. Further improvements could involve automating the process to schedule periodic updates using Prefect.
+
+## How to Use
 
 To get started, simply select your desired ticker, model, and parameters in the sidebar. View the predictions along with relevant financial metrics and explore additional resources for further analysis to make more informed investment decisions.
+
+## Disclaimer
+
+Please note that this project is for educational purposes only. The predictions and information provided here are not financial advice. Consult a professional financial advisor for investment decisions.
 
 ## Final Note
 
