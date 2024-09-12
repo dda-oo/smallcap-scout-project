@@ -90,7 +90,7 @@ if additional_info:
 
 # Fetch performance and predictions from the external service
 if selected_ticker:
-    st.write(f"Displaying {model_choice.upper()} model predictions for ticker: {selected_ticker}")
+    #st.write(f"Displaying {model_choice.upper()} model predictions for ticker: {selected_ticker}")
 
     # API URL
     api_url = 'https://smallcapscoutupdate-196636255726.europe-west1.run.app/predict'
