@@ -2,6 +2,8 @@ import streamlit as st
 import pandas as pd
 import requests
 import json
+import http.client
+import urllib
 
 # Set the favicon and page title
 st.set_page_config(
@@ -37,10 +39,10 @@ model_choice = st.sidebar.selectbox(
     ['rnn', 'xgb']  # Models in lowercase
 )
 
-# Step 2: Select a quarter (not a range, and limited to 2024-Q2)
+# Step 2: Select a quarter (limited to 2024-Q2)
 def quarter_range_slider():
     # Limit to June 2024 (Q2 of 2024) and go back to 2010
-    quarters = [(y, q) for y in range(2010, 2025) for q in ['Q1', 'Q2', 'Q3', 'Q4'] if not (y == 2024 and q == 'Q3')]
+    quarters = [(y, q) for y in range(2010, 2025) for q in ['Q1', 'Q2', 'Q3', 'Q4'] if not (y == 2024 and q == 'Q3') and not (y == 2024 and q == 'Q4')]
     quarter_labels = [f"{year}-{quarter}" for year, quarter in quarters]
 
     # Reverse the order to show from 2024-Q2 down to 2010-Q1
@@ -62,15 +64,17 @@ small_cap = st.sidebar.checkbox('Small Cap Only?', value=True)
 # Ensure only one ticker is processed
 st.sidebar.write(f"Selected ticker: {selected_ticker}")
 
-# Fetch performance and predictions from the external service
+# Section to display Ticker and Model Type
 if selected_ticker:
     st.write(f"Displaying {model_choice.upper()} model predictions for ticker: {selected_ticker}")
+    st.write(f"**Ticker:** {selected_ticker}")
+    st.write(f"**Model Type:** {model_choice.upper()}")
 
-    # API URL
-    api_url = 'https://smallcapscoutupdate-196636255726.europe-west1.run.app/predict'
+    # API URL for predictions
+    prediction_api_url = 'https://smallcapscoutupdate-196636255726.europe-west1.run.app/predict'
 
-    # Parameters for the FastAPI request
-    params = {
+    # Parameters for the FastAPI prediction request
+    prediction_params = {
         'ticker': selected_ticker,
         'model_type': model_choice,  # API expects lowercase model type
         'quarter': selected_quarter,  # The selected quarter
@@ -79,23 +83,73 @@ if selected_ticker:
         'small_cap': str(small_cap).lower()  # Convert boolean to lowercase string ('true'/'false')
     }
 
-    # Send the request to the FastAPI endpoint
-    response = requests.get(api_url, params=params)
+    # Send the prediction request to the FastAPI endpoint
+    response = requests.get(prediction_api_url, params=prediction_params)
 
     if response.status_code == 200:
         data = response.json()
 
-        # Display the API response
-        st.write(f"**Ticker:** {data['ticker']}")
-        st.write(f"**Model Type:** {data['model_type']}")
-        st.write(f"**Prediction:** {data['prediction']}")
-        st.write(f"**Worthiness:** {data['worthiness']}")
-        st.write(f"**Quarter:** {data['quarter']}")
-        st.write(f"**Horizon:** {data['horizon']}")
-        st.write(f"**Threshold:** {data['threshold']}")
-        st.write(f"**Small Cap:** {data['small_cap']}")
+        # Section to display company info
+        st.subheader("Additional Information")
+        info_api_url = f'https://smallcapscoutupdate-196636255726.europe-west1.run.app/info?ticker={selected_ticker}'
+        info_response = requests.get(info_api_url)
+
+        if info_response.status_code == 200:
+            info_data = info_response.json()
+            st.write(f"**Company name:** {info_data['Company name']}")
+            st.write(f"**Market cap:** {info_data['Market cap']}")
+            st.write(f"**Revenues:** {info_data['Revenues']}")
+            st.write(f"**Gross Profit:** {info_data['Gross Profit']}")
+            st.write(f"**Net Income:** {info_data['Net Income']}")
+            st.write(f"**Operating Cash Flows:** {info_data['Operating Cash Flows']}")
+        else:
+            st.error("Failed to fetch company information.")
+
+        # Section to display predictions
+        st.subheader("Prediction Results")
+        worthiness = data.get('worthiness', 'Unknown')
+
+        if worthiness == 'worthy':
+            st.write(f"**Worthiness:** {worthiness}. Based on our deep analytics, this stock seems promising!")
+        else:
+            st.write(f"**Worthiness:** {worthiness}. Unfortunately, our data suggests this stock might not be the best investment.")
+
     else:
-        st.error(f"Failed to fetch data for {selected_ticker}. Response code: {response.status_code}")
+        st.error(f"Failed to fetch predictions for {selected_ticker}. Response code: {response.status_code}")
+
+# Function to fetch stock news using Marketaux API
+def fetch_stock_news_marketaux(tickers):
+    if not tickers:  # Check if there are selected tickers
+        return []
+
+    conn = http.client.HTTPSConnection('api.marketaux.com')
+    params = urllib.parse.urlencode({
+        'api_token': 'ADMI4P1TMPl0bv5LUblXDRsitsoaRiLIfeFNNrlm',  # The actual API token
+        'symbols': ','.join(tickers),
+        'limit': 5  # Adjust the limit as needed
+    })
+
+    conn.request('GET', '/v1/news/all?{}'.format(params))
+    res = conn.getresponse()
+
+    if res.status == 200:
+        data = res.read()
+        news_data = json.loads(data.decode('utf-8'))
+        return news_data.get('data', [])
+    else:
+        st.error("Failed to fetch news.")
+        return []
+
+# Display news for the selected ticker in the sidebar
+if selected_ticker:
+    st.sidebar.header("Latest News")
+    news_data = fetch_stock_news_marketaux([selected_ticker])  # Fetch news for the selected ticker
+
+    # Display news items in the sidebar
+    for item in news_data:
+        title = item.get('title', 'No Title Available')  # Fallback if title is not found
+        link = item.get('url', '#')  # Use 'url' or a fallback if the key is not found
+        st.sidebar.write(f"- **{title}**: [Read more]({link})")
 
 # Display disclaimer at the bottom of the sidebar or main page
 st.sidebar.markdown("<br><br><hr>", unsafe_allow_html=True)  # Adds a separator line
