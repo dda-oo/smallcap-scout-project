@@ -6,17 +6,6 @@ Welcome to the **Stock Analysis and Prediction Dashboard**! This application is 
 
 ## Project Overview
 
-### Small-Cap Scout
-
-**Project Date:** 13.09.2024  
-**Le Wagon Batch:** 1751  
-
-**Team Members:**  
-- Christopher Nance  
-- Eoin Gaynard  
-- Reza Mehdizadeh  
-- Daryoosh Dehestani  
-
 ### Objectives
 
 - **Finds small-cap US companies** with a high likelihood of extraordinary returns based on fundamentals.
@@ -34,9 +23,9 @@ Welcome to the **Stock Analysis and Prediction Dashboard**! This application is 
 - **Google Trends & Sentiment Analysis:** To capture market sentiment.
 - **Economic Data & Trade Flows:** FRED, CME, MIT Observatory.
 
-## Aspects of Our Dataset
+## Aspects of the Custom-Built Dataset
 
-- **Data Size:** Over 170k Observations from more than 5,800 companies with 59 features.
+- **Data Size:** Over 170k observations from more than 5,800 companies with 59 features.
 - **Models Employed:**
   - **Baseline:**
     - Logistic Regression: Classification tasks for predicting company growth.
@@ -54,11 +43,11 @@ Welcome to the **Stock Analysis and Prediction Dashboard**! This application is 
 - **Threshold:** Growth percentage threshold for ‘successful’ companies (30% | 50%)
 - **Small Cap:** Whether to only consider small companies (True | False)
 
-## API Demo
-
 ### Output & Performance
 
-- **2 Year Market Cap Prediction:** Threshold: 50% growth
+- **Output Predictions:** 
+  - **Horizon:** quarter-ahead, year-ahead, two-years-ahead
+  - **Threshold:** 50% growth
   - **Accuracy:** 72%
   - **Precision:** 65%
   
