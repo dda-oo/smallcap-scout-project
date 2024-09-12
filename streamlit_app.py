@@ -114,7 +114,7 @@ if selected_ticker:
         # Display the API response
         st.write(f"**Ticker:** {data['ticker']}")
         st.write(f"**Model Type:** {data['model_type']}")
-        
+
         # Display prediction and worthiness
         worthiness = data.get('worthiness', 'No data available')
         st.subheader("Prediction")
