@@ -39,7 +39,7 @@ model_choice = st.sidebar.selectbox(
 # Step 2: Select a quarter (including all quarters and defaulting to 2024-Q2)
 def quarter_range_slider():
     # Include all quarters from 2010 to 2024 and set the default index to 2024-Q2
-    quarters = [(y, q) for y in range(2010, 2025) for q in ['Q1', 'Q2', 'Q3', 'Q4']]
+    quarters = [(y, q) for y in range(2010, 2025) for q in ['Q1', 'Q2', 'Q3', 'Q4'] if not (y == 2024 and q == 'Q4')]
     quarter_labels = [f"{year}-{quarter}" for year, quarter in quarters]
 
     # Reverse the order to show from 2024-Q2 down to 2010-Q1
@@ -74,6 +74,7 @@ def fetch_additional_info(ticker):
 
 # Fetch additional information for the selected ticker
 additional_info = fetch_additional_info(selected_ticker)
+Please note: All figures are in USD. Market cap is shown in millions of dollars.
 
 # Display additional information if available
 if additional_info:
