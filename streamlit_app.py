@@ -38,12 +38,18 @@ model_choice = st.sidebar.selectbox(
 )
 
 # Step 2: Select a quarter (not a range, and limited to 2024-Q3)
-def quarter_selection():
-    quarters = [(y, q) for y in range(2010, 2025) for q in ['Q1', 'Q2', 'Q3']]
-    quarter_labels = [f"{year}-{quarter}" for year, quarter in quarters if not (year == 2024 and quarter == 'Q4')]
-    return st.sidebar.selectbox('Select a quarter:', options=quarter_labels, index=len(quarter_labels) - 1)
+def quarter_range_slider():
+    # Limit to September 2024 (Q3 of 2024) and go back to 2010
+    quarters = [(y, q) for y in range(2010, 2025) for q in ['Q1', 'Q2', 'Q3', 'Q4'] if not (y == 2024 and q == 'Q4')]
+    quarter_labels = [f"{year}-{quarter}" for year, quarter in quarters]
+    
+    # Reverse the order to show from 2024-Q3 down to 2010-Q1
+    quarter_labels.reverse()
+    
+    return st.sidebar.selectbox('Select a quarter:', options=quarter_labels, index=0)
 
-selected_quarter = quarter_selection()
+# Call the function to get the selected quarter
+selected_quarter = quarter_range_slider()
 
 # Step 3: Select a single ticker (limited to one ticker at a time)
 selected_ticker = st.sidebar.selectbox('Select a ticker:', available_tickers)
