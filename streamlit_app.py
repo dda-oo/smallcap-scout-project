@@ -2,13 +2,10 @@ import streamlit as st
 import pandas as pd
 import requests
 import json
-import http.client
-import urllib.parse
-from yahoo_fin import stock_info as si  # For Yahoo Finance data
 
 # Set the favicon and page title
 st.set_page_config(
-    page_title="Stock Predictor", 
+    page_title="Stock Predictor",
     page_icon="images/favicon.ico",  # Ensure favicon is in the "images" folder
     layout="wide"  # Optional: Makes the layout wider for better visibility
 )
@@ -22,8 +19,8 @@ st.sidebar.image("images/logo1.png", width=170)  # Ensure logo is in the "images
 # Title and description (centered on the main page)
 st.title("Stock Performance and Prediction Dashboard")
 st.write("""
-    Analyze stock performance, compare multiple tickers, predict future growth, and get investment recommendations. 
-    Choose a model to analyze predictions using various techniques.
+    Analyze stock performance and predict future stock growth.
+    Choose a model to analyze predictions for individual tickers using RNN or XGB models.
 """)
 
 # Load the available tickers dynamically from a CSV file
@@ -34,134 +31,77 @@ def load_tickers():
 
 available_tickers = load_tickers()
 
-# Step 1: Select a model from the dropdown
+# Step 1: Select a model from the dropdown (limited to RNN and XGB)
 model_choice = st.sidebar.selectbox(
     'Choose a model for prediction:',
-    ['RNN', 'KNN', 'Logistic Regression']
+    ['RNN', 'XGB']
 )
 
-# Step 2: Conditionally display the quarter range slider for models other than RNN
-if model_choice != 'RNN':
-    def quarter_range_slider():
-        # Limit to September 2024 (Q3 of 2024)
-        quarters = [(y, q) for y in range(2010, 2025) for q in ['Q1', 'Q2', 'Q3', 'Q4'] if not (y == 2024 and q == 'Q4')]
-        quarter_labels = [f"{year}-{quarter}" for year, quarter in quarters]
-        return st.sidebar.select_slider('Select a quarter range:', options=quarter_labels, value=('2010-Q1', '2024-Q3'))
+# Step 2: Select a quarter (not a range, and limited to 2024-Q3)
+def quarter_selection():
+    quarters = [(y, q) for y in range(2010, 2025) for q in ['Q1', 'Q2', 'Q3']]
+    quarter_labels = [f"{year}-{quarter}" for year, quarter in quarters if not (year == 2024 and quarter == 'Q4')]
+    return st.sidebar.selectbox('Select a quarter:', options=quarter_labels, index=len(quarter_labels) - 1)
 
-    from_quarter, to_quarter = quarter_range_slider()
-else:
-    from_quarter, to_quarter = None, None  # If RNN is selected, we don't use quarter ranges
+selected_quarter = quarter_selection()
 
-# Step 3: Allow users to dynamically select tickers using a multiselect box in the sidebar
-tickers = st.sidebar.multiselect('Select up to 5 tickers:', available_tickers)
+# Step 3: Select a single ticker (limited to one ticker at a time)
+selected_ticker = st.sidebar.selectbox('Select a ticker:', available_tickers)
 
-# Limit tickers
-if len(tickers) > 5:
-    st.sidebar.error("You can select a maximum of 5 tickers.")
-else:
-    st.sidebar.write(f"Selected tickers: {', '.join(tickers)}")
-
-# Step 4: Define additional parameters for the FastAPI request
+# Step 4: Additional parameters for the request
 sequence = st.sidebar.slider('Select Sequence Length:', min_value=1, max_value=12, value=4)
-horizon = st.sidebar.selectbox('Select Prediction Horizon:', ['quarter-ahead', 'year-ahead', '2_year-ahead'])
-threshold = st.sidebar.slider('Select Threshold:', min_value=0.1, max_value=1.0, step=0.1, value=0.5)
+horizon = st.sidebar.selectbox('Select Prediction Horizon:', ['quarter-ahead', 'year-ahead'])
+threshold = st.sidebar.slider('Select Threshold (%):', min_value=10, max_value=100, step=10, value=50)
 small_cap = st.sidebar.checkbox('Small Cap Only?', value=True)
 
-# Fetch news for the selected tickers from the Marketaux API
-def fetch_stock_news_marketaux(tickers):
-    if not tickers:  # Check if there are selected tickers
-        return []
-    
-    conn = http.client.HTTPSConnection('api.marketaux.com')
-    params = urllib.parse.urlencode({
-        'api_token': 'ADMI4P1TMPl0bv5LUblXDRsitsoaRiLIfeFNNrlm',  # The actual API token
-        'symbols': ','.join(tickers),
-        'limit': 5  # Adjust the limit as needed
-    })
-    
-    conn.request('GET', '/v1/news/all?{}'.format(params))
-    res = conn.getresponse()
-    
-    if res.status == 200:
-        data = res.read()
-        news_data = json.loads(data.decode('utf-8'))
-        return news_data.get('data', [])
-    else:
-        st.error("Failed to fetch news.")
-        return []
-
-# Display news for the selected tickers in the sidebar
-if tickers:
-    st.sidebar.header("Latest News")
-    news_data = fetch_stock_news_marketaux(tickers)  # Fetch news for selected tickers
-
-    # Display news items in the sidebar
-    for item in news_data:
-        title = item.get('title', 'No Title Available')  # Fallback if title is not found
-        link = item.get('url', '#')  # Use 'url' or a fallback if the key is not found
-        st.sidebar.write(f"- **{title}**: [Read more]({link})")
+# Ensure only one ticker is processed
+st.sidebar.write(f"Selected ticker: {selected_ticker}")
 
 # Fetch performance and predictions from the external service
-if tickers:
-    st.write(f"Displaying {model_choice} model predictions for tickers: {', '.join(tickers)}")
+if selected_ticker:
+    st.write(f"Displaying {model_choice} model predictions for ticker: {selected_ticker}")
+    
+    # API URL
     api_url = 'https://smallcapscout-196636255726.europe-west1.run.app/predict'
+    
+    # Parameters for the FastAPI request
     params = {
-        'tickers': ','.join(tickers),
-        'model_type': model_choice.lower().replace(' ', '_'),  # API expects lowercase and underscore-separated model types
-        'quarter': to_quarter if to_quarter else '2024-Q3',  # Default to '2024-Q3' if quarter range is not set (RNN)
-        'sequence': sequence,
-        'horizon': horizon,
-        'threshold': f"{int(threshold * 100)}%",  # Convert to percentage
-        'small_cap': small_cap
+        'ticker': selected_ticker,
+        'model_type': model_choice.lower(),  # API expects lowercase model type
+        'quarter': selected_quarter,  # The selected quarter
+        'sequence': sequence,  # Sequence length
+        'horizon': horizon,  # Prediction horizon
+        'threshold': f"{threshold}%",  # Threshold as a percentage
+        'small_cap': str(small_cap).lower()  # Convert boolean to lowercase string ('true'/'false')
     }
+    
+    # Send the request to the FastAPI endpoint
     response = requests.get(api_url, params=params)
-
+    
     if response.status_code == 200:
         data = response.json()
-        predictions = data.get('predictions', [])
-        recommendations = data.get('recommendations', [])
-
-        # If the model is RNN, we show only predictions, otherwise, we show historical data and predictions
-        if model_choice == 'RNN':
-            st.write("### Predictions")
-            for ticker_data in predictions:
-                ticker = ticker_data['ticker']
-                st.write(f"Predictions for {ticker}:")
-                for year in ['quarter_ahead', 'year_ahead', '2_year_ahead']:
-                    st.write(f"{year}: {ticker_data['data'].get(year)}")
-        else:
-            # Display historical performance
-            for ticker_data in predictions:
-                ticker = ticker_data['ticker']
-                ticker_performance = pd.DataFrame(ticker_data['data'])
-                st.write(f"Performance for {ticker}:")
-                st.line_chart(ticker_performance)
-
-            # Display predictions
-            st.write("### Predictions")
-            for ticker_data in predictions:
-                ticker = ticker_data['ticker']
-                st.write(f"Predictions for {ticker}:")
-                for year in ['quarter_ahead', 'year_ahead', '2_year_ahead']:
-                    st.write(f"{year}: {ticker_data['data'].get(year)}")
-
-        # Display investment recommendations
-        st.write("### Investment Recommendations")
-        for recommendation in recommendations:
-            ticker = recommendation['ticker']
-            advice = recommendation['advice']
-            st.write(f"**{ticker}:** {advice}")
+        
+        # Display the API response
+        st.write(f"**Ticker:** {data['ticker']}")
+        st.write(f"**Model Type:** {data['model_type']}")
+        st.write(f"**Prediction:** {data['prediction']}")
+        st.write(f"**Worthiness:** {data['worthiness']}")
+        st.write(f"**Quarter:** {data['quarter']}")
+        st.write(f"**Sequence:** {data['sequence']}")
+        st.write(f"**Horizon:** {data['horizon']}")
+        st.write(f"**Threshold:** {data['threshold']}")
+        st.write(f"**Small Cap:** {data['small_cap']}")
     else:
-        st.error("Failed to fetch data from external service.")
+        st.error(f"Failed to fetch data for {selected_ticker}. Response code: {response.status_code}")
 
 # Display disclaimer at the bottom of the sidebar or main page
 st.sidebar.markdown("<br><br><hr>", unsafe_allow_html=True)  # Adds a separator line
 st.sidebar.markdown(
     """
     <div style='font-size: 0.9em; font-style: italic; color: #666;'>
-    This project is for educational purposes only. The predictions and information provided here are not financial advice. 
+    This project is for educational purposes only. The predictions and information provided here are not financial advice.
     Please consult a professional financial advisor for investment decisions.
     </div>
-    """, 
+    """,
     unsafe_allow_html=True
 )
