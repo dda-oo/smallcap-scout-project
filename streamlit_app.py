@@ -1,9 +1,6 @@
 import streamlit as st
 import pandas as pd
 import requests
-import json
-import http.client
-import urllib.parse
 
 # Set the favicon and page title
 st.set_page_config(
@@ -82,7 +79,7 @@ additional_info = fetch_additional_info(selected_ticker)
 if additional_info:
     st.subheader("Additional Information about the Chosen Ticker and Its Last Status in the Stock Market")
     st.write(f"**Company Name:** {additional_info['Company name']}")
-    st.write(f"**Market Cap:** ${additional_info['Market cap'] / 1_000_000:.2f} million USD")  # Market cap in millions
+    st.write(f"**Market Cap:** ${additional_info['Market cap'] / 1_000_000:.2f} million")
     st.write(f"**Revenues:** ${additional_info['Revenues']:.2f} USD")
     st.write(f"**Gross Profit:** ${additional_info['Gross Profit']:.2f} USD")
     st.write(f"**Net Income:** ${additional_info['Net Income']:.2f} USD")
@@ -128,9 +125,9 @@ if selected_ticker:
     else:
         st.error(f"Failed to fetch prediction data for {selected_ticker}. Response code: {response.status_code}")
 
-# Additional professional feature: Suggested Resources
+# Dynamic Suggested Resources based on the selected ticker
 st.subheader("Suggested Resources for Further Analysis")
-st.write("Check out the following resources to enhance your investment strategies:")
+st.write(f"Check out resources related to {selected_ticker}:")
 st.write("- [Yahoo Finance](https://finance.yahoo.com): Comprehensive stock market data.")
 st.write("- [MarketWatch](https://www.marketwatch.com): Up-to-date financial news and analysis.")
 st.write("- [Investopedia](https://www.investopedia.com): Learn more about financial concepts.")
