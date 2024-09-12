@@ -82,7 +82,7 @@ additional_info = fetch_additional_info(selected_ticker)
 if additional_info:
     st.subheader("Additional Information about the Chosen Ticker and Its Last Status in the Stock Market")
     st.write(f"**Company Name:** {additional_info['Company name']}")
-    st.write(f"**Market Cap:** ${additional_info['Market cap'] / 1_000_000:.2f} million")  # Market cap in millions
+    st.write(f"**Market Cap:** ${additional_info['Market cap'] / 1_000_000:.2f} million USD")  # Market cap in millions
     st.write(f"**Revenues:** ${additional_info['Revenues']:.2f} USD")
     st.write(f"**Gross Profit:** ${additional_info['Gross Profit']:.2f} USD")
     st.write(f"**Net Income:** ${additional_info['Net Income']:.2f} USD")
@@ -127,6 +127,13 @@ if selected_ticker:
             st.write("Congratulations! This stock is worthy according to our analysis. It might be a great investment!")
     else:
         st.error(f"Failed to fetch prediction data for {selected_ticker}. Response code: {response.status_code}")
+
+# Additional professional feature: Suggested Resources
+st.subheader("Suggested Resources for Further Analysis")
+st.write("Check out the following resources to enhance your investment strategies:")
+st.write("- [Yahoo Finance](https://finance.yahoo.com): Comprehensive stock market data.")
+st.write("- [MarketWatch](https://www.marketwatch.com): Up-to-date financial news and analysis.")
+st.write("- [Investopedia](https://www.investopedia.com): Learn more about financial concepts.")
 
 # Display disclaimer at the bottom of the sidebar or main page
 st.sidebar.markdown("<br><br><hr>", unsafe_allow_html=True)  # Adds a separator line
