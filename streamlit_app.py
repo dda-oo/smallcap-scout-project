@@ -29,7 +29,7 @@ st.write("""
 # Load the available tickers dynamically from a CSV file
 @st.cache
 def load_tickers():
-    tickers_df = pd.read_csv('data/sample.csv')  # Ensure this path is correct
+    tickers_df = pd.read_csv('data/cik_ticker_pairs.csv')  # Ensure this path is correct
     return tickers_df['Ticker'].tolist()
 
 available_tickers = load_tickers()
