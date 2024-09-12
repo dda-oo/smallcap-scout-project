@@ -98,7 +98,7 @@ if tickers:
 # Fetch performance and predictions from the external service
 if tickers:
     st.write(f"Displaying {model_choice} model predictions for tickers: {', '.join(tickers)}")
-    api_url = 'https://smallcapscout-196636255726.europe-west1.run.app/predict'
+    api_url = 'https://smallcapscout-196636255726.europe-west1.run.app/docs'
     params = {
         'tickers': ','.join(tickers),
         'from_quarter': from_quarter,
