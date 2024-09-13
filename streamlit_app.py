@@ -80,7 +80,7 @@ if additional_info:
     st.subheader("Additional Information about the Chosen Ticker and Its Last Status in the Stock Market")
     
     # Format the numbers with thousand separators and no decimal points
-    market_cap_formatted = f"{additional_info['Market cap'] / 1_000_000:,.0f}".replace(",", ".")
+    market_cap_formatted = f"{additional_info['Market cap']:,.0f}".replace(",", ".")
     revenues_formatted = f"{additional_info['Revenues'] / 1_000_000:,.0f}".replace(",", ".")
     gross_profit_formatted = f"{additional_info['Gross Profit'] / 1_000_000:,.0f}".replace(",", ".")
     net_income_formatted = f"{additional_info['Net Income'] / 1_000_000:,.0f}".replace(",", ".")
