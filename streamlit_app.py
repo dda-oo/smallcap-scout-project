@@ -78,12 +78,20 @@ additional_info = fetch_additional_info(selected_ticker)
 # Display additional information if available
 if additional_info:
     st.subheader("Additional Information about the Chosen Ticker and Its Last Status in the Stock Market")
+    
+    # Format the numbers with thousand separators and no decimal points
+    market_cap_formatted = f"{additional_info['Market cap'] / 1_000_000:,.0f}".replace(",", ".")
+    revenues_formatted = f"{additional_info['Revenues'] / 1_000_000:,.0f}".replace(",", ".")
+    gross_profit_formatted = f"{additional_info['Gross Profit'] / 1_000_000:,.0f}".replace(",", ".")
+    net_income_formatted = f"{additional_info['Net Income'] / 1_000_000:,.0f}".replace(",", ".")
+    operating_cash_flows_formatted = f"{additional_info['Operating Cash Flows'] / 1_000_000:,.0f}".replace(",", ".")
+
     st.write(f"**Company Name:** {additional_info['Company name']}")
-    st.write(f"**Market Cap:** ${additional_info['Market cap']:.2f} USD million")
-    st.write(f"**Revenues:** ${additional_info['Revenues']/ 1_000_000:.2f} USD million")
-    st.write(f"**Gross Profit:** ${additional_info['Gross Profit']/ 1_000_000:.2f} USD million")
-    st.write(f"**Net Income:** ${additional_info['Net Income']/ 1_000_000:.2f} USD million")
-    st.write(f"**Operating Cash Flows:** ${additional_info['Operating Cash Flows']/ 1_000_000:.2f} USD million")
+    st.write(f"**Market Cap:** {market_cap_formatted} USD million")
+    st.write(f"**Revenues:** {revenues_formatted} USD million")
+    st.write(f"**Gross Profit:** {gross_profit_formatted} USD million")
+    st.write(f"**Net Income:** {net_income_formatted} USD million")
+    st.write(f"**Operating Cash Flows:** {operating_cash_flows_formatted} USD million")
 
 # Fetch performance and predictions from the external service
 if selected_ticker:
