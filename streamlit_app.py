@@ -110,15 +110,17 @@ if selected_ticker:
 
         # Display prediction and worthiness
         worthiness = data.get('worthiness', 'No data available')
+        probability = data.get('probability', None)  # Fetch 'probability' from the response, if available
+
         st.subheader("Prediction")
         st.write(f"**Worthiness:** {worthiness}")
-        st.write(f"**Probability of Company Success:** {probability*100}%")
         
-        # Display a fun message based on worthiness
-        if worthiness.lower() == "not worthy":
-            st.write("Based on our deep analytics, this stock might not be the best pick. Consider other options!")
-        elif worthiness.lower() == "worthy":
-            st.write("Congratulations! This stock is worthy according to our analysis. It might be a great investment!")
+        # Only display probability if it exists in the API response
+        if probability is not None:
+            st.write(f"**Probability of Company Success:** {probability*100}%")
+        else:
+            st.write("**Probability of Company Success:** No data available")
+
     else:
         st.error(f"Failed to fetch prediction data for {selected_ticker}. Response code: {response.status_code}")
 
