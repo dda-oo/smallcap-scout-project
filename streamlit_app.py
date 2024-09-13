@@ -123,10 +123,10 @@ if selected_ticker:
         st.subheader("Prediction")
         st.write(f"**Worthiness:** {worthiness}")
         
-        # Only display probability if it exists in the API response
-        if probability is not None:
+        # Only display "Probability of Company Success" if the model is "xgb" and probability is available
+        if model_choice == "xgb" and probability is not None:
             st.write(f"**Probability of Company Success:** {probability*100}%")
-        else:
+        elif model_choice == "xgb":
             st.write("**Probability of Company Success:** No data available")
 
     else:
