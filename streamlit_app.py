@@ -79,11 +79,11 @@ additional_info = fetch_additional_info(selected_ticker)
 if additional_info:
     st.subheader("Additional Information about the Chosen Ticker and Its Last Status in the Stock Market")
     st.write(f"**Company Name:** {additional_info['Company name']}")
-    st.write(f"**Market Cap:** ${additional_info['Market cap'] / 1_000_000:.2f} million")
-    st.write(f"**Revenues:** ${additional_info['Revenues']:.2f} USD")
-    st.write(f"**Gross Profit:** ${additional_info['Gross Profit']:.2f} USD")
-    st.write(f"**Net Income:** ${additional_info['Net Income']:.2f} USD")
-    st.write(f"**Operating Cash Flows:** ${additional_info['Operating Cash Flows']:.2f} USD")
+    st.write(f"**Market Cap:** ${additional_info['Market cap']:.2f} USD million")
+    st.write(f"**Revenues:** ${additional_info['Revenues']/ 1_000_000:.2f} USD million")
+    st.write(f"**Gross Profit:** ${additional_info['Gross Profit']/ 1_000_000:.2f} USD million")
+    st.write(f"**Net Income:** ${additional_info['Net Income']/ 1_000_000:.2f} USD million")
+    st.write(f"**Operating Cash Flows:** ${additional_info['Operating Cash Flows']/ 1_000_000:.2f} USD million")
 
 # Fetch performance and predictions from the external service
 if selected_ticker:
@@ -112,7 +112,8 @@ if selected_ticker:
         worthiness = data.get('worthiness', 'No data available')
         st.subheader("Prediction")
         st.write(f"**Worthiness:** {worthiness}")
-
+        st.write(f"**Probability of Company Success:** {probability*100}%")
+        
         # Display a fun message based on worthiness
         if worthiness.lower() == "not worthy":
             st.write("Based on our deep analytics, this stock might not be the best pick. Consider other options!")
